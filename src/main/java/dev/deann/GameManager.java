@@ -2,12 +2,15 @@ package dev.deann;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Chest;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.yaml.snakeyaml.Yaml;
@@ -46,6 +49,8 @@ public class GameManager {
 
     private Logger serverLogger;
 
+    private DeathEvent deathListener;
+
     public GameManager() {
         serverLogger = Skywars.getInstance().getLogger();
     }
@@ -73,9 +78,41 @@ public class GameManager {
         World world = ((Player) sender).getLocation().getWorld();
         for (int i = 0; i < sender.getServer().getOnlinePlayers().size(); i++) {
             int[] curLoc = spawnLocations.get(i);
-            players.get(i).teleport(new Location(world, curLoc[0], curLoc[1], curLoc[2]));
+            Player p = players.get(i);
+            p.setFoodLevel(20);
+            p.setHealth(20);
+            p.setGameMode(GameMode.SURVIVAL);
+            p.teleport(new Location(world, curLoc[0], curLoc[1], curLoc[2]));
         }
         serverLogger.log(Level.INFO, "Players sent to spawns");
+        setChests(world, chestLocations);
+        serverLogger.log(Level.INFO, "Chests Set");
+        deathListener = new DeathEvent(players, this);
+        Skywars.addEventListener(deathListener);
+        serverLogger.log(Level.INFO, "Death events being watched");
+        return true;
+    }
+
+    public void endGame(Player winner) {
+        Skywars.removeDeathListener(deathListener);
+        winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
+    }
+
+    // Helpers
+    private ArrayList<int[]> parseLocations(ArrayList<String> locations) {
+        ArrayList<int[]> arr = new ArrayList<>();
+        for (String s : locations) {
+            String[] coordStrs = s.split(" ");
+            int[] cur = new int[3];
+            for (int i = 0; i < coordStrs.length; i++) {
+                cur[i] = Integer.parseInt(coordStrs[i]);
+            }
+            arr.add(cur);
+        }
+        return arr;
+    }
+
+    private void setChests(World world, ArrayList<int[]> chestLocations) {
         for (int[] curLoc : chestLocations) {
             Location chestLoc = new Location(world, curLoc[0], curLoc[1], curLoc[2]);
             chestLoc.getBlock().setType(Material.CHEST);
@@ -108,22 +145,7 @@ public class GameManager {
                 }
             }
         }
-        serverLogger.log(Level.INFO, "Chests Set");
-        return true;
     }
 
-    // Helpers
-    private ArrayList<int[]> parseLocations(ArrayList<String> locations) {
-        ArrayList<int[]> arr = new ArrayList<>();
-        for (String s : locations) {
-            String[] coordStrs = s.split(" ");
-            int[] cur = new int[3];
-            for (int i = 0; i < coordStrs.length; i++) {
-                cur[i] = Integer.parseInt(coordStrs[i]);
-            }
-            arr.add(cur);
-        }
-        return arr;
-    }
 
 }
