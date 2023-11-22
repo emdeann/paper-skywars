@@ -9,7 +9,7 @@ import java.util.logging.Level;
 public class CommandHelpers {
     public static void sendMessage(Component c, CommandSender sender) {
         if (sender instanceof Player) {
-            ((Player) sender).sendMessage(c);
+            sender.sendMessage(c);
         } else {
             Skywars.getInstance().getLogger().log(Level.ALL, c.toString());
         }

@@ -14,12 +14,12 @@ import java.util.ArrayList;
 
 public class GameEventListener implements Listener {
 
-    private ArrayList<Player> playerList;
-    private ArrayList<Player> spectatorList;
+    private final ArrayList<Player> playerList;
+    private final ArrayList<Player> spectatorList;
 
     private final int MAX_PLAYERS;
 
-    private GameManager gameManager;
+    private final GameManager gameManager;
     public GameEventListener(ArrayList<Player> playerList, GameManager gameManager, int maxPlayers) {
         this.playerList = new ArrayList<>(playerList);
         spectatorList = new ArrayList<>();
@@ -38,7 +38,7 @@ public class GameEventListener implements Listener {
 
         if (playerList.size() == 1) {
             playerList.addAll(spectatorList);
-            gameManager.endGame(playerList.get(0), playerList);
+            gameManager.endGame(playerList.get(0));
         }
     }
 

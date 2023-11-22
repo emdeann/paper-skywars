@@ -7,9 +7,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class CountdownRunnable extends BukkitRunnable {
 
-    private Plugin plugin;
-    private String countdownMessage;
-    private String finishedMessage;
+    private final Plugin plugin;
+    private final String countdownMessage;
+    private final String finishedMessage;
     private int timer;
 
     public CountdownRunnable(Plugin plugin, int timerStart, String countdownMessage, String finishedMessage) {

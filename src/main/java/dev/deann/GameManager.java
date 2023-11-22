@@ -52,17 +52,9 @@ public class GameManager {
     }
     public boolean start(CommandSender sender) {
         FileConfiguration config = Skywars.getInstance().getConfig();
-        List<String> spawnList = config.getStringList("Spawns");
-        List<String> chestList = config.getStringList("Chests");
-        ArrayList<int[]> spawnLocations;
-        ArrayList<int[]> chestLocations;
-        if (spawnList != null && chestList != null) {
-            spawnLocations = parseLocations(spawnList);
-            chestLocations = parseLocations(chestList);
-        } else {
-            CommandHelpers.sendMessage(Component.text("Improper config file", NamedTextColor.RED), sender);
-            return false;
-        }
+
+        ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
+        ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
         ArrayList<Player> players = new ArrayList<>(sender.getServer().getOnlinePlayers());
         if (players.size() > spawnLocations.size()) {
             CommandHelpers.sendMessage(Component.text("Too many players!", NamedTextColor.RED), sender);
@@ -104,9 +96,8 @@ public class GameManager {
         return true;
     }
 
-    public void endGame(Player winner, ArrayList<Player> players) {
+    public void endGame(Player winner) {
         Skywars.removeGameListener(gameListener);
-        World oldWorld = winner.getWorld();
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
         winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
     }
@@ -163,7 +154,7 @@ public class GameManager {
     }
 
     private World resetMap(String newWorldName) {
-       copyFileStructure(new File(Bukkit.getWorldContainer(), "skywars_template"),
+       copyFileStructure(new File(Bukkit.getWorldContainer(), TEMPLATE_FOLDER),
                new File(Bukkit.getWorldContainer(), newWorldName));
        new WorldCreator(newWorldName).createWorld();
 
