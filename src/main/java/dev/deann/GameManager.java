@@ -9,6 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.codehaus.plexus.util.FileUtils;
 
@@ -51,11 +52,12 @@ public class GameManager {
         serverLogger = Skywars.getInstance().getLogger();
     }
     public boolean start(CommandSender sender) {
+        ArrayList<Player> players = new ArrayList<>(sender.getServer().getOnlinePlayers());
         FileConfiguration config = Skywars.getInstance().getConfig();
 
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
-        ArrayList<Player> players = new ArrayList<>(sender.getServer().getOnlinePlayers());
+
         if (players.size() > spawnLocations.size()) {
             CommandHelpers.sendMessage(Component.text("Too many players!", NamedTextColor.RED), sender);
             return false;
@@ -64,6 +66,7 @@ public class GameManager {
             CommandHelpers.sendMessage(Component.text("Start command must be sent by player", NamedTextColor.RED), sender);
             return false;
         }
+
         World lastWorld = ((Player) sender).getWorld();
         World swWorld = resetMap("skywars-" + System.currentTimeMillis());
         for (int i = 0; i < players.size(); i++) {
@@ -76,13 +79,9 @@ public class GameManager {
         }
         // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
         if (!lastWorld.getName().equals(LOBBY_NAME)) {
-            try {
-                Bukkit.unloadWorld(lastWorld, false);
-                FileUtils.deleteDirectory(lastWorld.getWorldFolder());
-            } catch (IOException e) {
-                serverLogger.log(Level.WARNING, "Error deleting old world file");
-            }
+            removeWorld(lastWorld);
         }
+
         serverLogger.log(Level.INFO, "Players sent to spawns");
         setChests(swWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
@@ -100,6 +99,23 @@ public class GameManager {
         Skywars.removeGameListener(gameListener);
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
         winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
+
+        new CountdownRunnable(Skywars.getInstance(), 10, "Returning to lobby in ",
+                "Returning to lobby!").runTaskTimer(Skywars.getInstance(), 0, 20);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                ArrayList<Player> players = new ArrayList<>(winner.getServer().getOnlinePlayers());
+                World lastWorld = winner.getWorld();
+                for (Player p : players) {
+                    p.setGameMode(GameMode.ADVENTURE);
+                    p.teleport(Bukkit.getWorld(LOBBY_NAME).getSpawnLocation());
+                }
+                removeWorld(lastWorld);
+            }
+        }.runTaskLater(Skywars.getInstance(), 200);
+
+        Skywars.setGameManager(null);
     }
 
 
@@ -115,6 +131,15 @@ public class GameManager {
             arr.add(cur);
         }
         return arr;
+    }
+
+    private void removeWorld(World world) {
+        try {
+            Bukkit.unloadWorld(world, false);
+            FileUtils.deleteDirectory(world.getWorldFolder());
+        } catch (IOException e) {
+            serverLogger.log(Level.WARNING, "Error deleting old world file");
+        }
     }
 
     private void setChests(World world, ArrayList<int[]> chestLocations) {

@@ -1,20 +1,22 @@
 package dev.deann;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Event;
+import org.bukkit.GameMode;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.logging.Level;
 
 
-public final class Skywars extends JavaPlugin {
+public final class Skywars extends JavaPlugin implements Listener {
 
     private static Skywars instance;
 
@@ -43,15 +45,23 @@ public final class Skywars extends JavaPlugin {
         // Plugin shutdown logic
     }
 
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        // Game not active; players spawning in lobby
+        if (gameManager == null) {
+            Player p = event.getPlayer();
+            p.setGameMode(GameMode.ADVENTURE);
+            p.sendMessage(Component.text("There is no active game right now, one should start soon!",
+                    NamedTextColor.DARK_PURPLE));
+        }
+    }
+
     public static Skywars getInstance() {
         return instance;
     }
 
     public static void setGameManager(GameManager manager) {
         gameManager = manager;
-    }
-    public static GameManager getGameManager() {
-        return gameManager;
     }
 
     public static void addEventListener(Listener e) {
