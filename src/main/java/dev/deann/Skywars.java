@@ -23,6 +23,17 @@ public final class Skywars extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
         instance = this;
+        this.saveDefaultConfig();
+        File worldContainer = this.getServer().getWorldContainer();
+        for (File f : worldContainer.listFiles()) {
+            if (f.getName().startsWith("skywars-")) {
+                try {
+                    FileUtils.deleteDirectory(f);
+                } catch (IOException e) {
+                    this.getLogger().log(Level.WARNING, "Failed to delete an old temporary map file");
+                }
+            }
+        }
         Bukkit.getPluginCommand("start").setExecutor(new StartExecutor());
 
     }
@@ -47,7 +58,7 @@ public final class Skywars extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(e, instance);
     }
 
-    public static void removeDeathListener(Listener l) {
+    public static void removeGameListener(Listener l) {
         PlayerDeathEvent.getHandlerList().unregister(l);
     }
 

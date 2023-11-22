@@ -5,23 +5,20 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.codehaus.plexus.util.FileUtils;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@SuppressWarnings("ALL")
 public class GameManager {
 
     private final double STARTER_PROBABILITY = 0.035;
@@ -29,6 +26,8 @@ public class GameManager {
 
     // Template map folder with this name must exist
     private final String TEMPLATE_FOLDER = "skywars_template";
+
+    private final String LOBBY_NAME = "skywars";
 
     private final Material[] availableSwords = {Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD};
     private final Material[] availableAxes = {Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE, Material.DIAMOND_AXE};
@@ -46,25 +45,25 @@ public class GameManager {
     private final int[] MAX_ITEMS = {2, 1, 1, 1, 1, 1, 1, 4};
     private final int[] setItems = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    private Logger serverLogger;
+    private final Logger serverLogger;
 
-    private DeathEvent deathListener;
-
+    private GameEventListener gameListener;
     public GameManager() {
         serverLogger = Skywars.getInstance().getLogger();
     }
     public boolean start(CommandSender sender) {
-        Yaml yaml = new Yaml();
-        InputStream iStream;
-        try {
-            iStream = new BufferedInputStream(new FileInputStream("C:/Users/dtm44/Desktop/config.yml"));
-        } catch (IOException e) {
-            CommandHelpers.sendMessage(Component.text("An internal file error occurred"), sender);
+        FileConfiguration config = Skywars.getInstance().getConfig();
+        List<String> spawnList = config.getStringList("Spawns");
+        List<String> chestList = config.getStringList("Chests");
+        ArrayList<int[]> spawnLocations;
+        ArrayList<int[]> chestLocations;
+        if (spawnList != null && chestList != null) {
+            spawnLocations = parseLocations(spawnList);
+            chestLocations = parseLocations(chestList);
+        } else {
+            CommandHelpers.sendMessage(Component.text("Improper config file", NamedTextColor.RED), sender);
             return false;
         }
-        Map<String, ArrayList<String>> config = yaml.load(iStream);
-        ArrayList<int[]> spawnLocations = parseLocations(config.get("Spawns"));
-        ArrayList<int[]> chestLocations = parseLocations(config.get("Chests"));
         ArrayList<Player> players = new ArrayList<>(sender.getServer().getOnlinePlayers());
         if (players.size() > spawnLocations.size()) {
             CommandHelpers.sendMessage(Component.text("Too many players!", NamedTextColor.RED), sender);
@@ -74,7 +73,8 @@ public class GameManager {
             CommandHelpers.sendMessage(Component.text("Start command must be sent by player", NamedTextColor.RED), sender);
             return false;
         }
-        World swWorld = ((Player) sender).getWorld();
+        World lastWorld = ((Player) sender).getWorld();
+        World swWorld = resetMap("skywars-" + System.currentTimeMillis());
         for (int i = 0; i < players.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
             Player p = players.get(i);
@@ -83,11 +83,20 @@ public class GameManager {
             p.setGameMode(GameMode.SURVIVAL);
             p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
+        // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
+        if (lastWorld.getName() != LOBBY_NAME) {
+            try {
+                Bukkit.unloadWorld(lastWorld, false);
+                FileUtils.deleteDirectory(lastWorld.getWorldFolder());
+            } catch (IOException e) {
+                serverLogger.log(Level.WARNING, "Error deleting old world file");
+            }
+        }
         serverLogger.log(Level.INFO, "Players sent to spawns");
         setChests(swWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
-        deathListener = new DeathEvent(players, this);
-        Skywars.addEventListener(deathListener);
+        gameListener = new GameEventListener(players, this, spawnLocations.size());
+        Skywars.addEventListener(gameListener);
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
@@ -97,34 +106,15 @@ public class GameManager {
     }
 
     public void endGame(Player winner, ArrayList<Player> players) {
-        Skywars.removeDeathListener(deathListener);
+        Skywars.removeGameListener(gameListener);
         World oldWorld = winner.getWorld();
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
-        new CountdownRunnable(Skywars.getInstance(), 15, "Map reset in ",
-                "Teleporting and waiting for the next game to start...")
-                .runTaskTimer(Skywars.getInstance(), 0, 20);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                try {
-                    World newWorld = resetMap("skywars-" + System.currentTimeMillis());
-                    for (Player p : players) {
-                        p.setGameMode(GameMode.SPECTATOR);
-                        p.teleport(newWorld.getSpawnLocation());
-                        // Cleanup
-                        Bukkit.unloadWorld(oldWorld, false);
-                        FileUtils.deleteDirectory(oldWorld.getWorldFolder());
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }.runTaskLater(Skywars.getInstance(), 15 * 20);
+        winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
     }
 
 
     // Helpers
-    private ArrayList<int[]> parseLocations(ArrayList<String> locations) {
+    private ArrayList<int[]> parseLocations(List<String> locations) {
         ArrayList<int[]> arr = new ArrayList<>();
         for (String s : locations) {
             String[] coordStrs = s.split(" ");
@@ -172,7 +162,7 @@ public class GameManager {
         }
     }
 
-    private World resetMap(String newWorldName) throws IOException {
+    private World resetMap(String newWorldName) {
        copyFileStructure(new File(Bukkit.getWorldContainer(), "skywars_template"),
                new File(Bukkit.getWorldContainer(), newWorldName));
        new WorldCreator(newWorldName).createWorld();
@@ -188,7 +178,7 @@ public class GameManager {
                     if(!target.exists())
                         if (!target.mkdirs())
                             throw new IOException("Couldn't create world directory!");
-                    String files[] = source.list();
+                    String[] files = source.list();
                     for (String file : files) {
                         File srcFile = new File(source, file);
                         File destFile = new File(target, file);
