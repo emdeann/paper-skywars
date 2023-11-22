@@ -15,7 +15,7 @@ public class DeathEvent implements Listener {
 
     private GameManager gameManager;
     public DeathEvent(ArrayList<Player> playerList, GameManager gameManager) {
-        this.playerList = playerList;
+        this.playerList = new ArrayList<>(playerList);
         spectatorList = new ArrayList<>();
         this.gameManager = gameManager;
     }
@@ -23,12 +23,15 @@ public class DeathEvent implements Listener {
     @EventHandler
     public void onDeathEvent(PlayerDeathEvent event) {
         Player dead = event.getPlayer();
+        // Skip respawn screen
+        dead.spigot().respawn();
         dead.setGameMode(GameMode.SPECTATOR);
         playerList.remove(dead);
         spectatorList.add(dead);
 
         if (playerList.size() == 1) {
-            //gameManager.endGame(playerList.get(0));
+            playerList.addAll(spectatorList);
+            gameManager.endGame(playerList.get(0), playerList);
         }
 
     }

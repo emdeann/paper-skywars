@@ -2,23 +2,19 @@ package dev.deann;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Chest;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.codehaus.plexus.util.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -30,6 +26,9 @@ public class GameManager {
 
     private final double STARTER_PROBABILITY = 0.035;
     private final double PROBABILITY_MOD = 0.005;
+
+    // Template map folder with this name must exist
+    private final String TEMPLATE_FOLDER = "skywars_template";
 
     private final Material[] availableSwords = {Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD};
     private final Material[] availableAxes = {Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE, Material.DIAMOND_AXE};
@@ -97,9 +96,30 @@ public class GameManager {
         return true;
     }
 
-    public void endGame(Player winner) {
+    public void endGame(Player winner, ArrayList<Player> players) {
         Skywars.removeDeathListener(deathListener);
+        World oldWorld = winner.getWorld();
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
+        new CountdownRunnable(Skywars.getInstance(), 15, "Map reset in ",
+                "Teleporting and waiting for the next game to start...")
+                .runTaskTimer(Skywars.getInstance(), 0, 20);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    World newWorld = resetMap("skywars-" + System.currentTimeMillis());
+                    for (Player p : players) {
+                        p.setGameMode(GameMode.SPECTATOR);
+                        p.teleport(newWorld.getSpawnLocation());
+                        // Cleanup
+                        Bukkit.unloadWorld(oldWorld, false);
+                        FileUtils.deleteDirectory(oldWorld.getWorldFolder());
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }.runTaskLater(Skywars.getInstance(), 15 * 20);
     }
 
 
@@ -149,6 +169,44 @@ public class GameManager {
                     }
                 }
             }
+        }
+    }
+
+    private World resetMap(String newWorldName) throws IOException {
+       copyFileStructure(new File(Bukkit.getWorldContainer(), "skywars_template"),
+               new File(Bukkit.getWorldContainer(), newWorldName));
+       new WorldCreator(newWorldName).createWorld();
+
+       return Bukkit.getWorld(newWorldName);
+    }
+
+    private void copyFileStructure(File source, File target){
+        try {
+            ArrayList<String> ignore = new ArrayList<>(Arrays.asList("uid.dat", "session.lock"));
+            if(!ignore.contains(source.getName())) {
+                if(source.isDirectory()) {
+                    if(!target.exists())
+                        if (!target.mkdirs())
+                            throw new IOException("Couldn't create world directory!");
+                    String files[] = source.list();
+                    for (String file : files) {
+                        File srcFile = new File(source, file);
+                        File destFile = new File(target, file);
+                        copyFileStructure(srcFile, destFile);
+                    }
+                } else {
+                    InputStream in = new FileInputStream(source);
+                    OutputStream out = new FileOutputStream(target);
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = in.read(buffer)) > 0)
+                        out.write(buffer, 0, length);
+                    in.close();
+                    out.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
