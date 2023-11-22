@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 public class GameManager {
 
     private final double STARTER_PROBABILITY = 0.035;
-    private final double PROBABILITY_MOD = 0.005;
 
     // Template map folder with this name must exist
     private final String TEMPLATE_FOLDER = "skywars_template";
@@ -84,7 +83,7 @@ public class GameManager {
             p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
         // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
-        if (lastWorld.getName() != LOBBY_NAME) {
+        if (!lastWorld.getName().equals(LOBBY_NAME)) {
             try {
                 Bukkit.unloadWorld(lastWorld, false);
                 FileUtils.deleteDirectory(lastWorld.getWorldFolder());
@@ -141,6 +140,7 @@ public class GameManager {
                 for (int curItemSet = 0; curItemSet < availableItems.length && !itemSet; curItemSet++) {
                     Material[] curItemsSet = availableItems[curItemSet];
                     for (int curItem = 0; curItem < curItemsSet.length && (setItems[curItemSet] < MAX_ITEMS[curItemSet]); curItem++) {
+                        double PROBABILITY_MOD = 0.005;
                         double probability = STARTER_PROBABILITY - curItem * PROBABILITY_MOD;
                         if (Arrays.equals(curItemsSet, availableBlocks)) {
                             // Boosted odds for blocks
