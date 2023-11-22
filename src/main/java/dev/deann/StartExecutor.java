@@ -6,8 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class StartExecutor implements CommandExecutor {
-
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         GameManager manager = new GameManager();
@@ -15,8 +13,4 @@ public class StartExecutor implements CommandExecutor {
 
         return manager.start(sender);
     }
-
-
-
-
 }

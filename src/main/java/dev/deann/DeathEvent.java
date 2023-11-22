@@ -28,7 +28,7 @@ public class DeathEvent implements Listener {
         spectatorList.add(dead);
 
         if (playerList.size() == 1) {
-            gameManager.endGame(playerList.get(0));
+            //gameManager.endGame(playerList.get(0));
         }
 
     }

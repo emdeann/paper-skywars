@@ -9,10 +9,10 @@ import org.bukkit.World;
 import org.bukkit.block.Chest;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedInputStream;
@@ -75,21 +75,25 @@ public class GameManager {
             CommandHelpers.sendMessage(Component.text("Start command must be sent by player", NamedTextColor.RED), sender);
             return false;
         }
-        World world = ((Player) sender).getLocation().getWorld();
-        for (int i = 0; i < sender.getServer().getOnlinePlayers().size(); i++) {
+        World swWorld = ((Player) sender).getWorld();
+        for (int i = 0; i < players.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
             Player p = players.get(i);
             p.setFoodLevel(20);
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
-            p.teleport(new Location(world, curLoc[0], curLoc[1], curLoc[2]));
+            p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
         serverLogger.log(Level.INFO, "Players sent to spawns");
-        setChests(world, chestLocations);
+        setChests(swWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
         deathListener = new DeathEvent(players, this);
         Skywars.addEventListener(deathListener);
         serverLogger.log(Level.INFO, "Death events being watched");
+
+        String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
+        BukkitTask countdown = new CountdownRunnable(Skywars.getInstance(), 5, countdownMessage, finishedMessage)
+                .runTaskTimer(Skywars.getInstance(), 0, 20);
         return true;
     }
 
@@ -97,6 +101,7 @@ public class GameManager {
         Skywars.removeDeathListener(deathListener);
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
     }
+
 
     // Helpers
     private ArrayList<int[]> parseLocations(ArrayList<String> locations) {
