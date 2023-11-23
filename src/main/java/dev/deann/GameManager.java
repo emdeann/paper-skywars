@@ -55,18 +55,21 @@ public class GameManager {
 
     private GameEventListener gameListener;
     private GameState gameState;
+    private ArrayList<Player> activePlayers;
+    private ArrayList<Player> spectators;
     public GameManager() {
         serverLogger = Skywars.getInstance().getLogger();
     }
 
     public boolean start(CommandSender sender) {
         gameState = GameState.SETUP;
-        ArrayList<Player> totalPlayers = new ArrayList<>(sender.getServer().getOnlinePlayers());
-
+        ArrayList<Player> allPlayers = new ArrayList<>(sender.getServer().getOnlinePlayers());
+        activePlayers = new ArrayList<>(allPlayers);
+        spectators = new ArrayList<>();
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
 
-        if (totalPlayers.size() > spawnLocations.size()) {
+        if (allPlayers.size() > spawnLocations.size()) {
             CommandHelpers.sendMessage(Component.text("Too many players!", NamedTextColor.RED), sender);
             return false;
         }
@@ -77,15 +80,15 @@ public class GameManager {
 
         World lastWorld = ((Player) sender).getWorld();
         World swWorld = resetMap("skywars-" + System.currentTimeMillis());
-        for (int i = 0; i < totalPlayers.size(); i++) {
+        for (int i = 0; i < allPlayers.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
-            Player p = totalPlayers.get(i);
+            Player p = allPlayers.get(i);
             p.setFoodLevel(20);
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
             p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
-        gameListener = new GameEventListener(totalPlayers, this, spawnLocations.size(), serverLogger);
+        gameListener = new GameEventListener(allPlayers, this, spawnLocations.size(), serverLogger);
         Skywars.addEventListener(gameListener);
         // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
         if (!lastWorld.getName().equals(LOBBY_NAME)) {
@@ -105,7 +108,8 @@ public class GameManager {
         return true;
     }
 
-    public void endGame(Player winner) {
+    public void endGame() {
+        Player winner = activePlayers.get(0);
         serverLogger.log(Level.INFO, "Game at " + winner.getWorld().getName() + " ending");
         Skywars.removeGameListener(gameListener);
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
@@ -134,6 +138,28 @@ public class GameManager {
         return gameState;
     }
 
+    public ArrayList<Player> getActivePlayers() {
+        return activePlayers;
+    }
+
+    public ArrayList<Player> getSpectators() {
+        return spectators;
+    }
+
+    public int getPlayersInGame() {
+        return activePlayers.size() + spectators.size();
+    }
+
+    public void removeActivePlayer(Player player) {
+        activePlayers.remove(player);
+        if (activePlayers.size() == 1) {
+            endGame();
+        }
+    }
+
+    public void addSpectator(Player player) {
+        spectators.add(player);
+    }
 
     // Helpers
     private ArrayList<int[]> parseLocations(List<String> locations) {

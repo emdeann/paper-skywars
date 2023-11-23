@@ -19,8 +19,6 @@ import java.util.logging.Logger;
 
 public class GameEventListener implements Listener {
 
-    private final ArrayList<Player> playerList;
-    private final ArrayList<Player> spectatorList;
 
     private final int MAX_PLAYERS;
 
@@ -29,8 +27,6 @@ public class GameEventListener implements Listener {
     private final Logger serverLogger;
 
     public GameEventListener(ArrayList<Player> playerList, GameManager gameManager, int maxPlayers, Logger logger) {
-        this.playerList = new ArrayList<>(playerList);
-        spectatorList = new ArrayList<>();
         this.gameManager = gameManager;
         this.MAX_PLAYERS = maxPlayers;
         this.serverLogger = logger;
@@ -43,13 +39,10 @@ public class GameEventListener implements Listener {
         // Skip respawn screen
         Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(), () -> dead.spigot().respawn(), 2);
         dead.setGameMode(GameMode.SPECTATOR);
-        playerList.remove(dead);
-        spectatorList.add(dead);
-
-        if (playerList.size() == 1) {
-            playerList.addAll(spectatorList);
-            gameManager.endGame(playerList.get(0));
-        }
+        // Prevent game win message from being sent before death message
+        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(),
+                () -> gameManager.removeActivePlayer(dead), 2);
+        gameManager.addSpectator(dead);
     }
 
     @EventHandler
@@ -59,11 +52,12 @@ public class GameEventListener implements Listener {
         joined.setGameMode(GameMode.SPECTATOR);
         joined.sendMessage(Component.text("A game is in progress, you will be added to the next one!",
                     NamedTextColor.DARK_PURPLE));
+        gameManager.addSpectator(joined);
     }
 
     @EventHandler
     public void onPlayerLogin(PlayerLoginEvent event) {
-        if (playerList.size() + spectatorList.size() >= MAX_PLAYERS) {
+        if (gameManager.getPlayersInGame() >= MAX_PLAYERS) {
             event.kickMessage(Component.text("This server is full!", NamedTextColor.RED));
             event.setResult(PlayerLoginEvent.Result.KICK_FULL);
             serverLogger.log(Level.INFO, "%s (%s) was kicked due to the server being full"
@@ -73,7 +67,7 @@ public class GameEventListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (gameManager.getGameState() == GameState.COUNTDOWN && playerList.contains(event.getPlayer())) {
+        if (gameManager.getGameState() == GameState.COUNTDOWN && gameManager.getActivePlayers().contains(event.getPlayer())) {
             Location from = event.getFrom();
             Location to = event.getTo();
             event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
