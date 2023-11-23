@@ -14,6 +14,8 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GameEventListener implements Listener {
 
@@ -24,17 +26,14 @@ public class GameEventListener implements Listener {
 
     private final GameManager gameManager;
 
-    private boolean inCountdown;
-    public GameEventListener(ArrayList<Player> playerList, GameManager gameManager, int maxPlayers) {
+    private final Logger serverLogger;
+
+    public GameEventListener(ArrayList<Player> playerList, GameManager gameManager, int maxPlayers, Logger logger) {
         this.playerList = new ArrayList<>(playerList);
         spectatorList = new ArrayList<>();
         this.gameManager = gameManager;
         this.MAX_PLAYERS = maxPlayers;
-        inCountdown = false;
-    }
-
-    public void setInCountdown(boolean inCountdown) {
-        this.inCountdown = inCountdown;
+        this.serverLogger = logger;
     }
 
     @EventHandler
@@ -67,12 +66,14 @@ public class GameEventListener implements Listener {
         if (playerList.size() + spectatorList.size() >= MAX_PLAYERS) {
             event.kickMessage(Component.text("This server is full!", NamedTextColor.RED));
             event.setResult(PlayerLoginEvent.Result.KICK_FULL);
+            serverLogger.log(Level.INFO, "%s (%s) was kicked due to the server being full"
+                    .formatted(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString()));
         }
     }
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (inCountdown && playerList.contains(event.getPlayer())) {
+        if (gameManager.getGameState() == GameState.COUNTDOWN && playerList.contains(event.getPlayer())) {
             Location from = event.getFrom();
             Location to = event.getTo();
             event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));

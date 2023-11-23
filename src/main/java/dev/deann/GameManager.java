@@ -54,16 +54,19 @@ public class GameManager {
     private final Logger serverLogger;
 
     private GameEventListener gameListener;
+    private GameState gameState;
     public GameManager() {
         serverLogger = Skywars.getInstance().getLogger();
     }
+
     public boolean start(CommandSender sender) {
-        ArrayList<Player> players = new ArrayList<>(sender.getServer().getOnlinePlayers());
+        gameState = GameState.SETUP;
+        ArrayList<Player> totalPlayers = new ArrayList<>(sender.getServer().getOnlinePlayers());
 
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
 
-        if (players.size() > spawnLocations.size()) {
+        if (totalPlayers.size() > spawnLocations.size()) {
             CommandHelpers.sendMessage(Component.text("Too many players!", NamedTextColor.RED), sender);
             return false;
         }
@@ -74,17 +77,16 @@ public class GameManager {
 
         World lastWorld = ((Player) sender).getWorld();
         World swWorld = resetMap("skywars-" + System.currentTimeMillis());
-        for (int i = 0; i < players.size(); i++) {
+        for (int i = 0; i < totalPlayers.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
-            Player p = players.get(i);
+            Player p = totalPlayers.get(i);
             p.setFoodLevel(20);
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
             p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
-        gameListener = new GameEventListener(players, this, spawnLocations.size());
+        gameListener = new GameEventListener(totalPlayers, this, spawnLocations.size(), serverLogger);
         Skywars.addEventListener(gameListener);
-        gameListener.setInCountdown(true);
         // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
         if (!lastWorld.getName().equals(LOBBY_NAME)) {
             removeWorld(lastWorld);
@@ -98,11 +100,13 @@ public class GameManager {
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
         BukkitTask countdown = new CountdownRunnable(Skywars.getInstance(), 5, countdownMessage, finishedMessage)
                 .runTaskTimer(Skywars.getInstance(), 0, 20);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(), () -> gameListener.setInCountdown(false), 100);
+        gameState = GameState.COUNTDOWN;
+        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(), () -> gameState = GameState.ACTIVE, 100);
         return true;
     }
 
     public void endGame(Player winner) {
+        serverLogger.log(Level.INFO, "Game at " + winner.getWorld().getName() + " ending");
         Skywars.removeGameListener(gameListener);
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
         winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
@@ -119,10 +123,15 @@ public class GameManager {
                     p.teleport(Bukkit.getWorld(LOBBY_NAME).getSpawnLocation());
                 }
                 removeWorld(lastWorld);
+                serverLogger.log(Level.INFO, "Players returned to lobby");
             }
         }.runTaskLater(Skywars.getInstance(), 200);
 
         Skywars.setGameManager(null);
+    }
+
+    public GameState getGameState() {
+        return gameState;
     }
 
 
