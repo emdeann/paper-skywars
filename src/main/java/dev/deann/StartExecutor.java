@@ -6,10 +6,14 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class StartExecutor implements CommandExecutor {
+
+    private Skywars plugin;
+    public StartExecutor(Skywars plugin) {
+        this.plugin = plugin;
+    }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        GameManager manager = new GameManager();
-        Skywars.setGameManager(manager);
+        GameManager manager = plugin.addGameManager();
 
         return manager.start(sender);
     }

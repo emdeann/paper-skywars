@@ -29,8 +29,11 @@ public class GameEventListener implements Listener {
 
     private final Logger serverLogger;
 
+    private final Skywars plugin;
+
     public GameEventListener(ArrayList<Player> playerList, GameManager gameManager, int maxPlayers, Logger logger) {
         this.gameManager = gameManager;
+        this.plugin = gameManager.getPlugin();
         this.MAX_PLAYERS = maxPlayers;
         this.serverLogger = logger;
     }
@@ -40,10 +43,11 @@ public class GameEventListener implements Listener {
         Player dead = event.getPlayer();
         Location deathLoc = dead.getLocation();
         // Skip respawn screen
-        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(), () -> dead.spigot().respawn(), 2);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> dead.spigot().respawn(), 2);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> dead.teleport(deathLoc), 5);
         dead.setGameMode(GameMode.SPECTATOR);
         // Prevent game win message from being sent before death message
-        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(),
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin,
                 () -> gameManager.removeActivePlayer(dead), 2);
         gameManager.addSpectator(dead);
     }
@@ -55,6 +59,7 @@ public class GameEventListener implements Listener {
         joined.setGameMode(GameMode.SPECTATOR);
         joined.sendMessage(Component.text("A game is in progress, you will be added to the next one!",
                     NamedTextColor.DARK_PURPLE));
+        joined.teleport(gameManager.getActiveWorld().getSpawnLocation());
         gameManager.addSpectator(joined);
     }
 

@@ -28,10 +28,10 @@ public class GameManager {
 
     // Template map folder with this name must exist
 
-    private static final FileConfiguration config = Skywars.getInstance().getConfig();
-    private static final String TEMPLATE_FOLDER = config.getString("Template");
+    private final FileConfiguration config;
+    private final String TEMPLATE_FOLDER;
 
-    private static final String LOBBY_NAME = config.getString("Lobby");
+    private final String LOBBY_NAME;
 
     private final double STARTER_PROBABILITY = 0.035;
 
@@ -51,17 +51,28 @@ public class GameManager {
     private final int[] MAX_ITEMS = {2, 1, 1, 1, 1, 1, 1, 4};
     private final int[] setItems = {0, 0, 0, 0, 0, 0, 0, 0};
 
+    private Skywars plugin;
     private final Logger serverLogger;
 
     private GameEventListener gameListener;
     private GameState gameState;
+    private World activeWorld;
     private ArrayList<Player> activePlayers;
     private ArrayList<Player> spectators;
-    public GameManager() {
-        serverLogger = Skywars.getInstance().getLogger();
+    public GameManager(Skywars plugin) {
+        this.plugin = plugin;
+        serverLogger = plugin.getLogger();
+        config = plugin.getConfig();
+        TEMPLATE_FOLDER = config.getString("Template");
+        LOBBY_NAME = config.getString("Lobby");
     }
 
     public boolean start(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            plugin.getServer().getConsoleSender().sendMessage("Start command must be sent by player");
+            return false;
+        }
+
         gameState = GameState.SETUP;
         ArrayList<Player> allPlayers = new ArrayList<>(sender.getServer().getOnlinePlayers());
         activePlayers = new ArrayList<>(allPlayers);
@@ -70,16 +81,12 @@ public class GameManager {
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
 
         if (allPlayers.size() > spawnLocations.size()) {
-            CommandHelpers.sendMessage(Component.text("Too many players!", NamedTextColor.RED), sender);
-            return false;
-        }
-        if (!(sender instanceof Player)) {
-            CommandHelpers.sendMessage(Component.text("Start command must be sent by player", NamedTextColor.RED), sender);
+            ((Player) sender).sendMessage(Component.text("Too many players!", NamedTextColor.RED));
             return false;
         }
 
         World lastWorld = ((Player) sender).getWorld();
-        World swWorld = resetMap("skywars-" + System.currentTimeMillis());
+        activeWorld = resetMap("skywars-" + System.currentTimeMillis());
         for (int i = 0; i < allPlayers.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
             Player p = allPlayers.get(i);
@@ -87,37 +94,37 @@ public class GameManager {
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
             p.getInventory().clear();
-            p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
+            p.teleport(new Location(activeWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
         gameListener = new GameEventListener(allPlayers, this, spawnLocations.size(), serverLogger);
-        Skywars.addEventListener(gameListener);
+        plugin.addEventListener(gameListener);
         // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
         if (!lastWorld.getName().equals(LOBBY_NAME)) {
             removeWorld(lastWorld);
         }
 
         serverLogger.log(Level.INFO, "Players sent to spawns");
-        setChests(swWorld, chestLocations);
+        setChests(activeWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
-        BukkitTask countdown = new CountdownRunnable(Skywars.getInstance(), 5, countdownMessage, finishedMessage)
-                .runTaskTimer(Skywars.getInstance(), 0, 20);
+        BukkitTask countdown = new CountdownRunnable(plugin, 5, countdownMessage, finishedMessage)
+                .runTaskTimer(plugin, 0, 20);
         gameState = GameState.COUNTDOWN;
-        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(), () -> gameState = GameState.ACTIVE, 100);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> gameState = GameState.ACTIVE, 100);
         return true;
     }
 
     public void endGame() {
         Player winner = activePlayers.get(0);
         serverLogger.log(Level.INFO, "Game at " + winner.getWorld().getName() + " ending");
-        Skywars.removeGameListener(gameListener);
+        plugin.removeGameListener(gameListener);
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
         winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
 
-        new CountdownRunnable(Skywars.getInstance(), 10, "Returning to lobby in ",
-                "Returning to lobby!").runTaskTimer(Skywars.getInstance(), 0, 20);
+        new CountdownRunnable(plugin, 10, "Returning to lobby in ",
+                "Returning to lobby!").runTaskTimer(plugin, 0, 20);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -131,9 +138,9 @@ public class GameManager {
                 removeWorld(lastWorld);
                 serverLogger.log(Level.INFO, "Players returned to lobby");
             }
-        }.runTaskLater(Skywars.getInstance(), 200);
+        }.runTaskLater(plugin, 200);
 
-        Skywars.setGameManager(null);
+        plugin.removeGameManager(this);
     }
 
     public GameState getGameState() {
@@ -150,6 +157,14 @@ public class GameManager {
 
     public int getPlayersInGame() {
         return activePlayers.size() + spectators.size();
+    }
+
+    public World getActiveWorld() {
+        return activeWorld;
+    }
+
+    public Skywars getPlugin() {
+        return this.plugin;
     }
 
     public void removeActivePlayer(Player player) {

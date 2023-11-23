@@ -13,18 +13,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 
 public final class Skywars extends JavaPlugin implements Listener {
-    private static Skywars instance;
 
-    private static GameManager gameManager;
+    private ArrayList<GameManager> gameManagers;
     @Override
     public void onEnable() {
         // Plugin startup logic
-        instance = this;
         this.saveDefaultConfig();
+        gameManagers = new ArrayList<>();
         File worldContainer = this.getServer().getWorldContainer();
         for (File f : worldContainer.listFiles()) {
             if (f.getName().startsWith("skywars-")) {
@@ -35,7 +35,7 @@ public final class Skywars extends JavaPlugin implements Listener {
                 }
             }
         }
-        Bukkit.getPluginCommand("start").setExecutor(new StartExecutor());
+        Bukkit.getPluginCommand("start").setExecutor(new StartExecutor(this));
 
     }
 
@@ -47,7 +47,7 @@ public final class Skywars extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         // Game not active; players spawning in lobby
-        if (gameManager == null) {
+        if (gameManagers.isEmpty()) {
             Player p = event.getPlayer();
             p.setGameMode(GameMode.ADVENTURE);
             p.sendMessage(Component.text("There is no active game right now, one should start soon!",
@@ -55,19 +55,25 @@ public final class Skywars extends JavaPlugin implements Listener {
         }
     }
 
-    public static Skywars getInstance() {
-        return instance;
+    public Skywars getInstance() {
+        return this;
     }
 
-    public static void setGameManager(GameManager manager) {
-        gameManager = manager;
+    public GameManager addGameManager() {
+        GameManager newManager = new GameManager(this);
+        gameManagers.add(newManager);
+        return newManager;
     }
 
-    public static void addEventListener(Listener e) {
-        Bukkit.getPluginManager().registerEvents(e, instance);
+    public void removeGameManager(GameManager manager) {
+        gameManagers.remove(manager);
     }
 
-    public static void removeGameListener(Listener l) {
+    public void addEventListener(Listener e) {
+        Bukkit.getPluginManager().registerEvents(e, this);
+    }
+
+    public void removeGameListener(Listener l) {
         PlayerDeathEvent.getHandlerList().unregister(l);
     }
 
