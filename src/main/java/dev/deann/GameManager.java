@@ -20,14 +20,20 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+// GameManager handles the main setup and execution of the game
+// Certain events are handled by the GameEventListener, which
+// calls back to the manager
 public class GameManager {
 
-    private final double STARTER_PROBABILITY = 0.035;
-
     // Template map folder with this name must exist
-    private final String TEMPLATE_FOLDER = "skywars_template";
 
-    private final String LOBBY_NAME = "skywars";
+    private static final FileConfiguration config = Skywars.getInstance().getConfig();
+    private static final String TEMPLATE_FOLDER = config.getString("Template");
+
+    private static final String LOBBY_NAME = config.getString("Lobby");
+
+    private final double STARTER_PROBABILITY = 0.035;
 
     private final Material[] availableSwords = {Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD};
     private final Material[] availableAxes = {Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE, Material.DIAMOND_AXE};
@@ -53,7 +59,6 @@ public class GameManager {
     }
     public boolean start(CommandSender sender) {
         ArrayList<Player> players = new ArrayList<>(sender.getServer().getOnlinePlayers());
-        FileConfiguration config = Skywars.getInstance().getConfig();
 
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
@@ -77,6 +82,9 @@ public class GameManager {
             p.setGameMode(GameMode.SURVIVAL);
             p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
+        gameListener = new GameEventListener(players, this, spawnLocations.size());
+        Skywars.addEventListener(gameListener);
+        gameListener.setInCountdown(true);
         // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
         if (!lastWorld.getName().equals(LOBBY_NAME)) {
             removeWorld(lastWorld);
@@ -85,13 +93,12 @@ public class GameManager {
         serverLogger.log(Level.INFO, "Players sent to spawns");
         setChests(swWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
-        gameListener = new GameEventListener(players, this, spawnLocations.size());
-        Skywars.addEventListener(gameListener);
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
         BukkitTask countdown = new CountdownRunnable(Skywars.getInstance(), 5, countdownMessage, finishedMessage)
                 .runTaskTimer(Skywars.getInstance(), 0, 20);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(Skywars.getInstance(), () -> gameListener.setInCountdown(false), 100);
         return true;
     }
 

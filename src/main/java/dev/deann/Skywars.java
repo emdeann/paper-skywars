@@ -17,7 +17,6 @@ import java.util.logging.Level;
 
 
 public final class Skywars extends JavaPlugin implements Listener {
-
     private static Skywars instance;
 
     private static GameManager gameManager;
