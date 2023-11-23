@@ -86,6 +86,7 @@ public class GameManager {
             p.setFoodLevel(20);
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
+            p.getInventory().clear();
             p.teleport(new Location(swWorld, curLoc[0], curLoc[1], curLoc[2]));
         }
         gameListener = new GameEventListener(allPlayers, this, spawnLocations.size(), serverLogger);
@@ -124,6 +125,7 @@ public class GameManager {
                 World lastWorld = winner.getWorld();
                 for (Player p : players) {
                     p.setGameMode(GameMode.ADVENTURE);
+                    p.getInventory().clear();
                     p.teleport(Bukkit.getWorld(LOBBY_NAME).getSpawnLocation());
                 }
                 removeWorld(lastWorld);
@@ -219,6 +221,7 @@ public class GameManager {
             }
         }
     }
+
 
     private World resetMap(String newWorldName) {
        copyFileStructure(new File(Bukkit.getWorldContainer(), TEMPLATE_FOLDER),
