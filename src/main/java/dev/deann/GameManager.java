@@ -1,7 +1,6 @@
 package dev.deann;
 
 import dev.deann.Enum.GameState;
-import dev.deann.EventListeners.GameEventListener;
 import dev.deann.Runnables.CountdownRunnable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -53,10 +52,8 @@ public class GameManager {
 
     private final Skywars plugin;
     private final Logger serverLogger;
-
-    private GameEventListener gameListener;
     private GameState gameState;
-    private World activeWorld;
+    private final World activeWorld;
     private ArrayList<Player> activePlayers;
     private ArrayList<Player> spectators;
     private ArrayList<Player> playersInGameServer;
@@ -147,29 +144,8 @@ public class GameManager {
     public GameState getGameState() {
         return gameState;
     }
-
-    public ArrayList<Player> getActivePlayers() {
-        return activePlayers;
-    }
-
-    public ArrayList<Player> getSpectators() {
-        return spectators;
-    }
-
-    public int getPlayersInGame() {
-        return activePlayers.size() + spectators.size();
-    }
-
-    public ArrayList<Player> getPlayersInGameServer() {
-        return playersInGameServer;
-    }
-
     public World getActiveWorld() {
         return activeWorld;
-    }
-
-    public Skywars getPlugin() {
-        return this.plugin;
     }
 
     public void removeActivePlayer(Player player) {

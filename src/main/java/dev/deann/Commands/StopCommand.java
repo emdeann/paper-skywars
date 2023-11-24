@@ -12,8 +12,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-
 public class StopCommand implements CommandExecutor {
 
     private final Skywars plugin;

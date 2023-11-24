@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 public class StartCommand implements CommandExecutor {
 
-    private Skywars plugin;
+    private final Skywars plugin;
     public StartCommand(Skywars plugin) {
         this.plugin = plugin;
     }
@@ -35,8 +36,7 @@ public class StartCommand implements CommandExecutor {
             return true;
         }
 
-        ArrayList<Player> onlinePlayers = new ArrayList<>(plugin.getLobbyWorld().getPlayers());
-        ArrayList<Player> sendToGame = new ArrayList<>(Arrays.asList((Player) sender));
+        ArrayList<Player> sendToGame = new ArrayList<>(List.of((Player) sender));
 
         for (int i = 0; i < plugin.getMaxPlayersPerGame() - 1 && i < args.length; i++) {
             Player p = Bukkit.getPlayer(args[i]);
