@@ -119,13 +119,15 @@ public class GameManager {
         else {
             Player winner = activePlayers.get(0);
             serverLogger.log(Level.INFO, "Game at " + activeWorld.getName() + " ending");
-            activeWorld.sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
+            // Have to delay messages slightly longer than respawn, so the dying player still sees them
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> activeWorld.sendMessage(
+                    Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN)), 3);
         }
         if (gameState == GameState.COUNTDOWN) {
             countdownTask.cancel();
         }
         new CountdownRunnable( countDownTimer, "Returning to lobby in ",
-                "Returning to lobby!", activeWorld).runTaskTimer(plugin, 0, 20);
+                "Returning to lobby!", activeWorld).runTaskTimer(plugin, 3, 20);
         new BukkitRunnable() {
             @Override
             public void run() {
