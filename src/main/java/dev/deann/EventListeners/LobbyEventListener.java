@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public class LobbyEventListener implements Listener {
@@ -29,6 +30,13 @@ public class LobbyEventListener implements Listener {
         joined.teleport(lobbyWorld.getSpawnLocation());
         joined.sendMessage(Component.text("Welcome to the lobby!",
                 NamedTextColor.DARK_PURPLE));
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (event.getEntity().getWorld().equals(plugin.getLobbyWorld())) {
+            event.setCancelled(true);
+        }
     }
 
 }
