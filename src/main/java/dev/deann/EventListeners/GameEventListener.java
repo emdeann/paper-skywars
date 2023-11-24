@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -60,6 +61,13 @@ public class GameEventListener implements Listener {
             Location from = event.getFrom();
             Location to = event.getTo();
             event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
+        }
+    }
+
+    @EventHandler
+    public void blockBreakEvent(BlockBreakEvent event) {
+        if (playerInCountdown(event.getPlayer())) {
+            event.setCancelled(true);
         }
     }
 
