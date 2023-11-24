@@ -40,6 +40,11 @@ public class GameEventListener implements Listener {
     public void onDeathEvent(PlayerDeathEvent event) {
         Player dead = event.getPlayer();
         Location deathLoc = dead.getLocation();
+        deathLoc.setY(0);
+        // Don't respawn in blocks
+        while (!gameManager.getActiveWorld().getBlockAt(deathLoc).isEmpty()) {
+            deathLoc.setY(deathLoc.getBlockY() + 1);
+        }
         // Skip respawn screen
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> dead.spigot().respawn(), 2);
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> dead.teleport(deathLoc), 5);
