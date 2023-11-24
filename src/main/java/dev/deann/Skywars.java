@@ -1,6 +1,7 @@
 package dev.deann;
 
 import dev.deann.Commands.StartCommand;
+import dev.deann.Commands.StopCommand;
 import dev.deann.EventListeners.LobbyEventListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -41,6 +42,7 @@ public final class Skywars extends JavaPlugin implements Listener {
         if (maxPlayersPerGame == 0) maxPlayersPerGame = 4;
         gameManagers = new ArrayList<>();
         Bukkit.getPluginCommand("start").setExecutor(new StartCommand(this));
+        Bukkit.getPluginCommand("stopGame").setExecutor(new StopCommand(this));
         Bukkit.getPluginManager().registerEvents(new LobbyEventListener(this), this);
 
     }

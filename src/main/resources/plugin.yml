@@ -8,3 +8,7 @@ commands:
     description: Start a Skywars game
     usage: /start
     aliases: [start]
+  stopGame:
+    description: Stop an active game
+    usage: /stopGame
+    aliases: [stopGame]

@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
@@ -61,6 +62,7 @@ public class GameManager {
     private ArrayList<Player> activePlayers;
     private ArrayList<Player> spectators;
     private ArrayList<Player> playersInGameServer;
+    private BukkitTask countdownTask;
     public GameManager(Skywars plugin) {
         this.plugin = plugin;
         serverLogger = plugin.getLogger();
@@ -95,7 +97,7 @@ public class GameManager {
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
-        new CountdownRunnable(5, countdownMessage, finishedMessage, activeWorld)
+        countdownTask = new CountdownRunnable(5, countdownMessage, finishedMessage, activeWorld)
                 .runTaskTimer(plugin, 0, 20);
         gameState = GameState.COUNTDOWN;
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> gameState = GameState.ACTIVE, 100);
@@ -103,12 +105,21 @@ public class GameManager {
     }
 
     public void endGame(boolean force) {
-        Player winner = activePlayers.get(0);
-        serverLogger.log(Level.INFO, "Game at " + winner.getWorld().getName() + " ending");
+        int countDownTimer = (force) ? 3 : 10;
+        if (force) {
+            activeWorld.sendMessage(Component.text("This game has been stopped", NamedTextColor.RED));
+            serverLogger.log(Level.INFO, "Game at " + activeWorld.getName() + " has been force shutdown");
+        }
+        else {
+            Player winner = activePlayers.get(0);
+            serverLogger.log(Level.INFO, "Game at " + activeWorld.getName() + " ending");
+            activeWorld.sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
+        }
+        if (gameState == GameState.COUNTDOWN) {
+            countdownTask.cancel();
+        }
         plugin.removeGameListener(gameListener);
-        activeWorld.sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
-        activeWorld.sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
-        new CountdownRunnable( 10, "Returning to lobby in ",
+        new CountdownRunnable( countDownTimer, "Returning to lobby in ",
                 "Returning to lobby!", activeWorld).runTaskTimer(plugin, 0, 20);
         new BukkitRunnable() {
             @Override
@@ -121,7 +132,7 @@ public class GameManager {
                 removeWorld(activeWorld);
                 serverLogger.log(Level.INFO, "Players returned to lobby");
             }
-        }.runTaskLater(plugin, 200);
+        }.runTaskLater(plugin, 20 * countDownTimer);
 
         plugin.removeGameManager(this);
     }
