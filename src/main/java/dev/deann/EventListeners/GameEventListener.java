@@ -23,19 +23,13 @@ import java.util.logging.Logger;
 public class GameEventListener implements Listener {
 
 
-    private final int MAX_PLAYERS;
 
     private final GameManager gameManager;
-
-    private final Logger serverLogger;
-
     private final Skywars plugin;
 
-    public GameEventListener(ArrayList<Player> playerList, GameManager gameManager, int maxPlayers, Logger logger) {
+    public GameEventListener(GameManager gameManager) {
         this.gameManager = gameManager;
         this.plugin = gameManager.getPlugin();
-        this.MAX_PLAYERS = maxPlayers;
-        this.serverLogger = logger;
     }
 
     @EventHandler
@@ -62,7 +56,7 @@ public class GameEventListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (gameManager.getGameState() == GameState.COUNTDOWN && gameManager.getActivePlayers().contains(event.getPlayer())) {
+        if (playerInCountdown(event.getPlayer())) {
             Location from = event.getFrom();
             Location to = event.getTo();
             event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
@@ -84,5 +78,9 @@ public class GameEventListener implements Listener {
         if (entity instanceof Player && event.getCause() == EntityDamageEvent.DamageCause.VOID) {
             ((Player) entity).setHealth(0);
         }
+    }
+
+    private boolean playerInCountdown(Player p) {
+        return gameManager.getGameState() == GameState.COUNTDOWN && gameManager.getActivePlayers().contains(p);
     }
 }

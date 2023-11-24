@@ -95,7 +95,7 @@ public class GameManager {
                     toTeleport.getBlockZ() + 0.5));
             setCageBlocks(p, cageMaterial, Material.AIR);
         }
-        gameListener = new GameEventListener(allPlayers, this, spawnLocations.size(), serverLogger);
+        gameListener = new GameEventListener(this);
         plugin.addEventListener(gameListener);
         serverLogger.log(Level.INFO, "Players sent to spawns");
         setChests(activeWorld, chestLocations);
