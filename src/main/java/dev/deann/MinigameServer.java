@@ -126,7 +126,7 @@ public final class MinigameServer extends JavaPlugin implements Listener {
     }
 
     // GameManager will call this on every player on game start
-    // To ensure nobody can both be in a game and in the quee
+    // To ensure nobody can both be in a game and in the queue
     public void removeFromQueue(Player p) {
         queue.remove(p);
     }

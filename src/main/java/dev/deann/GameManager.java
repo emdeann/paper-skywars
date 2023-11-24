@@ -155,6 +155,14 @@ public class GameManager {
         spectators.add(player);
     }
 
+    public void removePlayerFromServerList(Player player) {
+        playersInGameServer.remove(player);
+        removeActivePlayer(player);
+        spectators.remove(player);
+
+        activeWorld.sendMessage(Component.text(player.getName() + " has left the game!", NamedTextColor.AQUA));
+    }
+
     // Helpers
     private ArrayList<int[]> parseLocations(List<String> locations) {
         ArrayList<int[]> arr = new ArrayList<>();

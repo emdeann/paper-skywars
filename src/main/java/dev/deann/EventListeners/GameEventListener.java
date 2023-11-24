@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class GameEventListener implements Listener {
     private final MinigameServer plugin;
@@ -86,6 +87,15 @@ public class GameEventListener implements Listener {
             ((Player) entity).setHealth(0);
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler public void onPlayerLeave(PlayerQuitEvent event) {
+        if (!playerInGame(event.getPlayer())) return;
+
+        event.quitMessage(null);
+        Player p = event.getPlayer();
+        GameManager manager = getPlayerGame(p);
+        manager.removePlayerFromServerList(p);
     }
 
     private boolean playerInCountdown(Player p) {
