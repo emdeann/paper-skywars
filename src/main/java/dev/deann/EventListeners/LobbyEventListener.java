@@ -1,5 +1,6 @@
-package dev.deann;
+package dev.deann.EventListeners;
 
+import dev.deann.Skywars;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;

@@ -1,4 +1,4 @@
-package dev.deann;
+package dev.deann.Runnables;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

@@ -1,5 +1,7 @@
 package dev.deann;
 
+import dev.deann.Commands.StartCommand;
+import dev.deann.EventListeners.LobbyEventListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -23,21 +25,22 @@ import java.util.logging.Level;
 public final class Skywars extends JavaPlugin implements Listener {
 
     private ArrayList<GameManager> gameManagers;
-
-    private final int DEFAULT_MAX_GAMES = 5;
     private String lobbyName;
     private String templateName;
+    private int maxPlayersPerGame;
     private int maxGames;
     @Override
     public void onEnable() {
         // Plugin startup logic
         this.saveDefaultConfig();
         FileConfiguration config = this.getConfig();
-        maxGames = config.getInt("MaxGames", DEFAULT_MAX_GAMES);
+        maxGames = config.getInt("MaxGames", 5);
         lobbyName = config.getString("Lobby", "skywars");
         templateName = config.getString("Template", "skywars_template");
+        maxPlayersPerGame = config.getStringList("Spawns").size();
+        if (maxPlayersPerGame == 0) maxPlayersPerGame = 4;
         gameManagers = new ArrayList<>();
-        Bukkit.getPluginCommand("start").setExecutor(new StartExecutor(this));
+        Bukkit.getPluginCommand("start").setExecutor(new StartCommand(this));
         Bukkit.getPluginManager().registerEvents(new LobbyEventListener(this), this);
 
     }
@@ -102,5 +105,7 @@ public final class Skywars extends JavaPlugin implements Listener {
     public String getTemplateName() {
         return templateName;
     }
-
+    public int getMaxPlayersPerGame() {
+        return maxPlayersPerGame;
+    }
 }

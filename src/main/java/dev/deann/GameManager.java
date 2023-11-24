@@ -1,16 +1,17 @@
 package dev.deann;
 
+import dev.deann.Enum.GameState;
+import dev.deann.EventListeners.GameEventListener;
+import dev.deann.Runnables.CountdownRunnable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.block.Chest;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
@@ -63,24 +64,17 @@ public class GameManager {
         this.plugin = plugin;
         serverLogger = plugin.getLogger();
         config = plugin.getConfig();
-        TEMPLATE_FOLDER = config.getString("Template");
+        TEMPLATE_FOLDER = plugin.getTemplateName();
         LOBBY_NAME = config.getString("Lobby");
     }
 
-    public boolean start(Player sender) {
+    public boolean start(ArrayList<Player> allPlayers) {
         gameState = GameState.SETUP;
-        ArrayList<Player> allPlayers = new ArrayList<>(sender.getServer().getOnlinePlayers());
         activePlayers = new ArrayList<>(allPlayers);
         spectators = new ArrayList<>();
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
 
-        if (allPlayers.size() > spawnLocations.size()) {
-            sender.sendMessage(Component.text("Too many players!", NamedTextColor.RED));
-            return false;
-        }
-
-        World lastWorld = ((Player) sender).getWorld();
         activeWorld = resetMap("skywars-" + System.currentTimeMillis());
         for (int i = 0; i < allPlayers.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
@@ -93,18 +87,13 @@ public class GameManager {
         }
         gameListener = new GameEventListener(allPlayers, this, spawnLocations.size(), serverLogger);
         plugin.addEventListener(gameListener);
-        // Delete temp world folder when it isn't the lobby (i.e. in any reset after the initial start)
-        if (!lastWorld.getName().equals(LOBBY_NAME)) {
-            removeWorld(lastWorld);
-        }
-
         serverLogger.log(Level.INFO, "Players sent to spawns");
         setChests(activeWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
-        BukkitTask countdown = new CountdownRunnable(plugin, 5, countdownMessage, finishedMessage)
+        new CountdownRunnable(plugin, 5, countdownMessage, finishedMessage)
                 .runTaskTimer(plugin, 0, 20);
         gameState = GameState.COUNTDOWN;
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> gameState = GameState.ACTIVE, 100);
@@ -127,7 +116,7 @@ public class GameManager {
                 for (Player p : players) {
                     p.setGameMode(GameMode.ADVENTURE);
                     p.getInventory().clear();
-                    p.teleport(Bukkit.getWorld(LOBBY_NAME).getSpawnLocation());
+                    p.teleport(plugin.getLobbyWorld().getSpawnLocation());
                 }
                 removeWorld(lastWorld);
                 serverLogger.log(Level.INFO, "Players returned to lobby");
