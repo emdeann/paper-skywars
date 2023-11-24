@@ -6,6 +6,8 @@ import dev.deann.Runnables.CountdownRunnable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -78,6 +80,7 @@ public class GameManager {
         spectators = new ArrayList<>();
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
+        Material cageMaterial = Material.GLASS;
 
         activeWorld = resetMap("skywars-" + System.currentTimeMillis());
         for (int i = 0; i < allPlayers.size(); i++) {
@@ -87,7 +90,10 @@ public class GameManager {
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
             p.getInventory().clear();
-            p.teleport(new Location(activeWorld, curLoc[0], curLoc[1], curLoc[2]));
+            Location toTeleport = new Location(activeWorld, curLoc[0], curLoc[1], curLoc[2]);
+            p.teleport(new Location(activeWorld, toTeleport.getBlockX() + 0.5, toTeleport.getBlockY(),
+                    toTeleport.getBlockZ() + 0.5));
+            setCageBlocks(p, cageMaterial, Material.AIR);
         }
         gameListener = new GameEventListener(allPlayers, this, spawnLocations.size(), serverLogger);
         plugin.addEventListener(gameListener);
@@ -97,15 +103,25 @@ public class GameManager {
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
-        countdownTask = new CountdownRunnable(5, countdownMessage, finishedMessage, activeWorld)
+        int countdownLength = 5;
+        countdownTask = new CountdownRunnable(countdownLength, countdownMessage, finishedMessage, activeWorld)
                 .runTaskTimer(plugin, 0, 20);
         gameState = GameState.COUNTDOWN;
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> gameState = GameState.ACTIVE, 100);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                gameState = GameState.ACTIVE;
+                for (Player p : allPlayers) {
+                    setCageBlocks(p, Material.AIR, cageMaterial);
+                }
+            }
+        }.runTaskLater(plugin, 20 * countdownLength);
         return true;
     }
 
     public void endGame(boolean force) {
         int countDownTimer = (force) ? 3 : 10;
+        gameState = GameState.FINISHED;
         if (force) {
             activeWorld.sendMessage(Component.text("This game has been stopped", NamedTextColor.RED));
             serverLogger.log(Level.INFO, "Game at " + activeWorld.getName() + " has been force shutdown");
@@ -231,6 +247,29 @@ public class GameManager {
         }
     }
 
+    private ArrayList<Block> getCageBlocks(Player player, Material replaceable) {
+        ArrayList<Block> cageList = new ArrayList<>();
+        Block[] offLimits = {player.getLocation().getBlock(), player.getLocation().add(0, 1, 0).getBlock()};
+        for (int i = 0; i < 2; i++) {
+            Block curBlock = offLimits[i];
+            BlockFace[] faces = {BlockFace.UP, BlockFace.DOWN, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH};
+            for (BlockFace face : faces) {
+                Block newBlock = curBlock.getRelative(face);
+                if (newBlock.getType() == replaceable && !newBlock.equals(offLimits[i ^ 1])) {
+                    cageList.add(newBlock);
+                }
+            }
+        }
+        return cageList;
+    }
+
+
+    private void setCageBlocks(Player player, Material setTo, Material replace) {
+        for (Block b : getCageBlocks(player, replace)) {
+            b.setType(setTo);
+        }
+    }
+
 
     private World resetMap(String newWorldName) {
        copyFileStructure(new File(Bukkit.getWorldContainer(), TEMPLATE_FOLDER),
@@ -272,6 +311,4 @@ public class GameManager {
             throw new RuntimeException(e);
         }
     }
-
-
 }
