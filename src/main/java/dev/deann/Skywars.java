@@ -2,6 +2,7 @@ package dev.deann;
 
 import dev.deann.Commands.StartCommand;
 import dev.deann.Commands.StopCommand;
+import dev.deann.EventListeners.GameEventListener;
 import dev.deann.EventListeners.LobbyEventListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -12,7 +13,6 @@ import org.bukkit.WorldCreator;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,12 +20,15 @@ import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 
 
 public final class Skywars extends JavaPlugin implements Listener {
 
-    private ArrayList<GameManager> gameManagers;
+    private Map<World, GameManager> worldToGame;
     private String lobbyName;
     private String templateName;
     private int maxPlayersPerGame;
@@ -39,11 +42,12 @@ public final class Skywars extends JavaPlugin implements Listener {
         lobbyName = config.getString("Lobby", "skywars");
         templateName = config.getString("Template", "skywars_template");
         maxPlayersPerGame = config.getStringList("Spawns").size();
+        worldToGame = new HashMap<>();
         if (maxPlayersPerGame == 0) maxPlayersPerGame = 4;
-        gameManagers = new ArrayList<>();
-        Bukkit.getPluginCommand("start").setExecutor(new StartCommand(this));
-        Bukkit.getPluginCommand("stopGame").setExecutor(new StopCommand(this));
+        Objects.requireNonNull(Bukkit.getPluginCommand("start")).setExecutor(new StartCommand(this));
+        Objects.requireNonNull(Bukkit.getPluginCommand("stopGame")).setExecutor(new StopCommand(this));
         Bukkit.getPluginManager().registerEvents(new LobbyEventListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new GameEventListener(this), this);
 
     }
 
@@ -73,20 +77,16 @@ public final class Skywars extends JavaPlugin implements Listener {
 
     public GameManager addGameManager() {
         GameManager newManager = new GameManager(this);
-        gameManagers.add(newManager);
+        worldToGame.put(newManager.getActiveWorld(), newManager);
         return newManager;
     }
 
     public void removeGameManager(GameManager manager) {
-        gameManagers.remove(manager);
+        worldToGame.remove(manager.getActiveWorld());
     }
 
-    public void addEventListener(Listener e) {
-        Bukkit.getPluginManager().registerEvents(e, this);
-    }
-
-    public void removeGameListener(Listener l) {
-        HandlerList.unregisterAll(l);
+    public Map<World, GameManager> getWorldToGame() {
+        return worldToGame;
     }
 
     public int getMaxGames() {
@@ -94,11 +94,7 @@ public final class Skywars extends JavaPlugin implements Listener {
     }
 
     public int getActiveGames() {
-        return gameManagers.size();
-    }
-
-    public ArrayList<GameManager> getGameManagers() {
-        return gameManagers;
+        return worldToGame.size();
     }
 
     public World getLobbyWorld() {

@@ -19,24 +19,24 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 public class GameEventListener implements Listener {
-
-
-
-    private final GameManager gameManager;
     private final Skywars plugin;
 
-    public GameEventListener(GameManager gameManager) {
-        this.gameManager = gameManager;
-        this.plugin = gameManager.getPlugin();
+    public GameEventListener(Skywars plugin) {
+        this.plugin = plugin;
     }
+
+    // Handlers in this class must use either playerInGame or playerInCountdown
+    // To avoid affecting players in lobby
 
     @EventHandler
     public void onDeathEvent(PlayerDeathEvent event) {
         Player dead = event.getPlayer();
+        if (!playerInGame(dead)) return;
+
         Location deathLoc = dead.getLocation();
+        GameManager gameManager = getPlayerGame(dead);
         int spawnY = dead.getWorld().getSpawnLocation().getBlockY();
         if (deathLoc.getBlockY() < spawnY) {
             deathLoc.setY(spawnY);
@@ -73,8 +73,8 @@ public class GameEventListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (gameManager.getGameState() == GameState.COUNTDOWN && event.getAction() == Action.RIGHT_CLICK_BLOCK &&
-        event.getClickedBlock().getType() == Material.CHEST) {
+        if (playerInCountdown(event.getPlayer()) && event.getAction() == Action.RIGHT_CLICK_BLOCK &&
+        event.getClickedBlock() != null && event.getClickedBlock().getType() == Material.CHEST) {
             event.setCancelled(true);
         }
     }
@@ -83,12 +83,22 @@ public class GameEventListener implements Listener {
     public void onPlayerDamage(EntityDamageEvent event) {
         Entity entity = event.getEntity();
         // Instant kill with void damage
-        if (entity instanceof Player && event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+        if (entity instanceof Player && playerInGame((Player) entity) && event.getCause() == EntityDamageEvent.DamageCause.VOID) {
             ((Player) entity).setHealth(0);
+            event.setCancelled(true);
         }
     }
 
     private boolean playerInCountdown(Player p) {
-        return gameManager.getGameState() == GameState.COUNTDOWN && gameManager.getActivePlayers().contains(p);
+        return playerInGame(p) && getPlayerGame(p).getGameState() == GameState.COUNTDOWN;
     }
+
+    private boolean playerInGame(Player p) {
+        return getPlayerGame(p) != null;
+    }
+
+    private GameManager getPlayerGame(Player p) {
+        return plugin.getWorldToGame().get(p.getWorld());
+    }
+
 }

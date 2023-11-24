@@ -35,10 +35,6 @@ public class GameManager {
     private final FileConfiguration config;
     private final String TEMPLATE_FOLDER;
 
-    private final String LOBBY_NAME;
-
-    private final double STARTER_PROBABILITY = 0.035;
-
     private final Material[] availableSwords = {Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD};
     private final Material[] availableAxes = {Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE, Material.DIAMOND_AXE};
     private final Material[] availableTools = {Material.STONE_PICKAXE, Material.GOLDEN_PICKAXE,
@@ -70,7 +66,7 @@ public class GameManager {
         serverLogger = plugin.getLogger();
         config = plugin.getConfig();
         TEMPLATE_FOLDER = plugin.getTemplateName();
-        LOBBY_NAME = config.getString("Lobby");
+        activeWorld = resetMap("skywars-" + System.currentTimeMillis());
     }
 
     public boolean start(ArrayList<Player> allPlayers) {
@@ -81,8 +77,6 @@ public class GameManager {
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
         Material cageMaterial = Material.GLASS;
-
-        activeWorld = resetMap("skywars-" + System.currentTimeMillis());
         for (int i = 0; i < allPlayers.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
             Player p = allPlayers.get(i);
@@ -95,8 +89,6 @@ public class GameManager {
                     toTeleport.getBlockZ() + 0.5));
             setCageBlocks(p, cageMaterial, Material.AIR);
         }
-        gameListener = new GameEventListener(this);
-        plugin.addEventListener(gameListener);
         serverLogger.log(Level.INFO, "Players sent to spawns");
         setChests(activeWorld, chestLocations);
         serverLogger.log(Level.INFO, "Chests Set");
@@ -134,7 +126,6 @@ public class GameManager {
         if (gameState == GameState.COUNTDOWN) {
             countdownTask.cancel();
         }
-        plugin.removeGameListener(gameListener);
         new CountdownRunnable( countDownTimer, "Returning to lobby in ",
                 "Returning to lobby!", activeWorld).runTaskTimer(plugin, 0, 20);
         new BukkitRunnable() {
@@ -167,6 +158,10 @@ public class GameManager {
 
     public int getPlayersInGame() {
         return activePlayers.size() + spectators.size();
+    }
+
+    public ArrayList<Player> getPlayersInGameServer() {
+        return playersInGameServer;
     }
 
     public World getActiveWorld() {
@@ -226,6 +221,7 @@ public class GameManager {
                     Material[] curItemsSet = availableItems[curItemSet];
                     for (int curItem = 0; curItem < curItemsSet.length && (setItems[curItemSet] < MAX_ITEMS[curItemSet]); curItem++) {
                         double PROBABILITY_MOD = 0.005;
+                        double STARTER_PROBABILITY = 0.035;
                         double probability = STARTER_PROBABILITY - curItem * PROBABILITY_MOD;
                         if (Arrays.equals(curItemsSet, availableBlocks)) {
                             // Boosted odds for blocks

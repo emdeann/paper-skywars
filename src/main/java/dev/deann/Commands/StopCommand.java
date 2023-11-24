@@ -28,13 +28,11 @@ public class StopCommand implements CommandExecutor {
             return true;
         }
 
-        ArrayList<GameManager> activeGames = plugin.getGameManagers();
         World senderWorld = ((Player) sender).getWorld();
-        for (GameManager game : activeGames) {
-            if (game.getActiveWorld().equals(senderWorld)) {
-                game.endGame(true);
-                return true;
-            }
+        GameManager game = plugin.getWorldToGame().get(senderWorld);
+        if (game != null) {
+            game.endGame(true);
+            return true;
         }
         sender.sendMessage(Component.text("You aren't in an active game!", NamedTextColor.RED));
         return true;
