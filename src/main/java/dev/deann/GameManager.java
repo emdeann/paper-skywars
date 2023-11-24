@@ -12,7 +12,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.codehaus.plexus.util.FileUtils;
 
@@ -97,15 +96,12 @@ public class GameManager {
         countdownTask = new CountdownRunnable(countdownLength, countdownMessage, finishedMessage, activeWorld)
                 .runTaskTimer(plugin, 0, 20);
         gameState = GameState.COUNTDOWN;
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                gameState = GameState.ACTIVE;
-                for (Player p : playersInGameServer) {
-                    setCageBlocks(p, Material.AIR, cageMaterial);
-                }
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            gameState = GameState.ACTIVE;
+            for (Player p : playersInGameServer) {
+                setCageBlocks(p, Material.AIR, cageMaterial);
             }
-        }.runTaskLater(plugin, 20 * countdownLength);
+        }, 20 * countdownLength);
         return true;
     }
 
@@ -128,18 +124,15 @@ public class GameManager {
         }
         new CountdownRunnable( countDownTimer, "Returning to lobby in ",
                 "Returning to lobby!", activeWorld).runTaskTimer(plugin, 3, 20);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (Player p : playersInGameServer) {
-                    p.setGameMode(GameMode.ADVENTURE);
-                    p.getInventory().clear();
-                    p.teleport(plugin.getLobbyWorld().getSpawnLocation());
-                }
-                removeWorld(activeWorld);
-                serverLogger.log(Level.INFO, "Players returned to lobby");
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+            for (Player p : playersInGameServer) {
+                p.setGameMode(GameMode.ADVENTURE);
+                p.getInventory().clear();
+                p.teleport(plugin.getLobbyWorld().getSpawnLocation());
             }
-        }.runTaskLater(plugin, 20 * countDownTimer);
+            removeWorld(activeWorld);
+            serverLogger.log(Level.INFO, "Players returned to lobby");
+        }, 20 * countDownTimer);
 
         plugin.removeGameManager(this);
     }

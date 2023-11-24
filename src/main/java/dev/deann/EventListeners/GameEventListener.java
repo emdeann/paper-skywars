@@ -31,6 +31,7 @@ public class GameEventListener implements Listener {
     @EventHandler
     public void onDeathEvent(PlayerDeathEvent event) {
         Player dead = event.getPlayer();
+        event.deathMessage(null);
         if (!playerInGame(dead)) return;
 
         Location deathLoc = dead.getLocation();
