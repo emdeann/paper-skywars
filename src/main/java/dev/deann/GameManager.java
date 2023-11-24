@@ -60,6 +60,7 @@ public class GameManager {
     private World activeWorld;
     private ArrayList<Player> activePlayers;
     private ArrayList<Player> spectators;
+    private ArrayList<Player> playersInGameServer;
     public GameManager(Skywars plugin) {
         this.plugin = plugin;
         serverLogger = plugin.getLogger();
@@ -71,6 +72,7 @@ public class GameManager {
     public boolean start(ArrayList<Player> allPlayers) {
         gameState = GameState.SETUP;
         activePlayers = new ArrayList<>(allPlayers);
+        playersInGameServer = new ArrayList<>(allPlayers);
         spectators = new ArrayList<>();
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
@@ -93,32 +95,30 @@ public class GameManager {
         serverLogger.log(Level.INFO, "Death events being watched");
 
         String countdownMessage = "Skywars starting in ", finishedMessage = "Skywars started!";
-        new CountdownRunnable(plugin, 5, countdownMessage, finishedMessage)
+        new CountdownRunnable(5, countdownMessage, finishedMessage, activeWorld)
                 .runTaskTimer(plugin, 0, 20);
         gameState = GameState.COUNTDOWN;
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> gameState = GameState.ACTIVE, 100);
         return true;
     }
 
-    public void endGame() {
+    public void endGame(boolean force) {
         Player winner = activePlayers.get(0);
         serverLogger.log(Level.INFO, "Game at " + winner.getWorld().getName() + " ending");
         plugin.removeGameListener(gameListener);
-        winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
-        winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
-        new CountdownRunnable(plugin, 10, "Returning to lobby in ",
-                "Returning to lobby!").runTaskTimer(plugin, 0, 20);
+        activeWorld.sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
+        activeWorld.sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
+        new CountdownRunnable( 10, "Returning to lobby in ",
+                "Returning to lobby!", activeWorld).runTaskTimer(plugin, 0, 20);
         new BukkitRunnable() {
             @Override
             public void run() {
-                ArrayList<Player> players = new ArrayList<>(winner.getServer().getOnlinePlayers());
-                World lastWorld = winner.getWorld();
-                for (Player p : players) {
+                for (Player p : playersInGameServer) {
                     p.setGameMode(GameMode.ADVENTURE);
                     p.getInventory().clear();
                     p.teleport(plugin.getLobbyWorld().getSpawnLocation());
                 }
-                removeWorld(lastWorld);
+                removeWorld(activeWorld);
                 serverLogger.log(Level.INFO, "Players returned to lobby");
             }
         }.runTaskLater(plugin, 200);
@@ -153,7 +153,7 @@ public class GameManager {
     public void removeActivePlayer(Player player) {
         activePlayers.remove(player);
         if (activePlayers.size() == 1) {
-            endGame();
+            endGame(false);
         }
     }
 

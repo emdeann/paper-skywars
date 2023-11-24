@@ -95,6 +95,10 @@ public final class Skywars extends JavaPlugin implements Listener {
         return gameManagers.size();
     }
 
+    public ArrayList<GameManager> getGameManagers() {
+        return gameManagers;
+    }
+
     public World getLobbyWorld() {
         if (Bukkit.getWorld(lobbyName) == null) {
             new WorldCreator(lobbyName).createWorld();
