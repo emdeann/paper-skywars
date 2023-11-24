@@ -2,7 +2,7 @@ package dev.deann.EventListeners;
 
 import dev.deann.GameManager;
 import dev.deann.Enum.GameState;
-import dev.deann.Skywars;
+import dev.deann.MinigameServer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -19,9 +19,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 public class GameEventListener implements Listener {
-    private final Skywars plugin;
+    private final MinigameServer plugin;
 
-    public GameEventListener(Skywars plugin) {
+    public GameEventListener(MinigameServer plugin) {
         this.plugin = plugin;
     }
 

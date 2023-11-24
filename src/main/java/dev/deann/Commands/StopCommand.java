@@ -1,7 +1,7 @@
 package dev.deann.Commands;
 
 import dev.deann.GameManager;
-import dev.deann.Skywars;
+import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class StopCommand implements CommandExecutor {
 
-    private final Skywars plugin;
+    private final MinigameServer plugin;
 
-    public StopCommand(Skywars plugin) {
+    public StopCommand(MinigameServer plugin) {
         this.plugin = plugin;
     }
     @Override

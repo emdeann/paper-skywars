@@ -47,7 +47,7 @@ public class GameManager {
     private final int[] MAX_ITEMS = {2, 1, 1, 1, 1, 1, 1, 4};
     private final int[] setItems = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    private final Skywars plugin;
+    private final MinigameServer plugin;
     private final Logger serverLogger;
     private GameState gameState;
     private final World activeWorld;
@@ -55,7 +55,7 @@ public class GameManager {
     private ArrayList<Player> spectators;
     private ArrayList<Player> playersInGameServer;
     private BukkitTask countdownTask;
-    public GameManager(Skywars plugin) {
+    public GameManager(MinigameServer plugin) {
         this.plugin = plugin;
         serverLogger = plugin.getLogger();
         config = plugin.getConfig();

@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 
-public final class Skywars extends JavaPlugin implements Listener {
+public final class MinigameServer extends JavaPlugin implements Listener {
 
     private Map<World, GameManager> worldToGame;
     private ArrayList<Player> queue;
@@ -43,8 +43,7 @@ public final class Skywars extends JavaPlugin implements Listener {
         maxGames = config.getInt("MaxGames", 5);
         lobbyName = config.getString("Lobby", "skywars");
         templateName = config.getString("Template", "skywars_template");
-        //maxPlayersPerGame = config.getStringList("Spawns").size();
-        maxPlayersPerGame = 2;
+        maxPlayersPerGame = config.getStringList("Spawns").size();
         worldToGame = new HashMap<>();
         queue = new ArrayList<>();
         if (maxPlayersPerGame == 0) maxPlayersPerGame = 4;

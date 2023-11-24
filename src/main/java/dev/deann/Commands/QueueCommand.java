@@ -1,6 +1,6 @@
 package dev.deann.Commands;
 
-import dev.deann.Skywars;
+import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class QueueCommand implements CommandExecutor {
 
-    Skywars plugin;
+    MinigameServer plugin;
 
-    public QueueCommand(Skywars plugin) {
+    public QueueCommand(MinigameServer plugin) {
         this.plugin = plugin;
     }
     @Override

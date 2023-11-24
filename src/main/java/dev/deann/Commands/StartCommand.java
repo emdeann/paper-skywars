@@ -1,6 +1,6 @@
 package dev.deann.Commands;
 import dev.deann.GameManager;
-import dev.deann.Skywars;
+import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -11,14 +11,13 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
 public class StartCommand implements CommandExecutor {
 
-    private final Skywars plugin;
-    public StartCommand(Skywars plugin) {
+    private final MinigameServer plugin;
+    public StartCommand(MinigameServer plugin) {
         this.plugin = plugin;
     }
     @Override

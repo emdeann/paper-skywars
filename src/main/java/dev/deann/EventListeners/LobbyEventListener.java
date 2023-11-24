@@ -1,6 +1,6 @@
 package dev.deann.EventListeners;
 
-import dev.deann.Skywars;
+import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;
@@ -13,10 +13,10 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 public class LobbyEventListener implements Listener {
 
-    private final Skywars plugin;
+    private final MinigameServer plugin;
     private final World lobbyWorld;
 
-    public LobbyEventListener(Skywars plugin) {
+    public LobbyEventListener(MinigameServer plugin) {
         this.plugin = plugin;
         this.lobbyWorld = plugin.getLobbyWorld();
     }
