@@ -53,27 +53,6 @@ public class GameEventListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        event.joinMessage(null);
-        Player joined = event.getPlayer();
-        joined.setGameMode(GameMode.SPECTATOR);
-        joined.sendMessage(Component.text("A game is in progress, you will be added to the next one!",
-                    NamedTextColor.DARK_PURPLE));
-        joined.teleport(gameManager.getActiveWorld().getSpawnLocation());
-        gameManager.addSpectator(joined);
-    }
-
-    @EventHandler
-    public void onPlayerLogin(PlayerLoginEvent event) {
-        if (gameManager.getPlayersInGame() >= MAX_PLAYERS) {
-            event.kickMessage(Component.text("This server is full!", NamedTextColor.RED));
-            event.setResult(PlayerLoginEvent.Result.KICK_FULL);
-            serverLogger.log(Level.INFO, "%s (%s) was kicked due to the server being full"
-                    .formatted(event.getPlayer().getName(), event.getPlayer().getUniqueId().toString()));
-        }
-    }
-
-    @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         if (gameManager.getGameState() == GameState.COUNTDOWN && gameManager.getActivePlayers().contains(event.getPlayer())) {
             Location from = event.getFrom();

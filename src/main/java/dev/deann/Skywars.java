@@ -4,6 +4,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -21,15 +24,21 @@ public final class Skywars extends JavaPlugin implements Listener {
 
     private ArrayList<GameManager> gameManagers;
 
-    private int DEFAULT_MAX_GAMES = 5;
+    private final int DEFAULT_MAX_GAMES = 5;
+    private String lobbyName;
+    private String templateName;
     private int maxGames;
     @Override
     public void onEnable() {
         // Plugin startup logic
         this.saveDefaultConfig();
-        maxGames = this.getConfig().getInt("MaxGames", DEFAULT_MAX_GAMES);
+        FileConfiguration config = this.getConfig();
+        maxGames = config.getInt("MaxGames", DEFAULT_MAX_GAMES);
+        lobbyName = config.getString("Lobby", "skywars");
+        templateName = config.getString("Template", "skywars_template");
         gameManagers = new ArrayList<>();
         Bukkit.getPluginCommand("start").setExecutor(new StartExecutor(this));
+        Bukkit.getPluginManager().registerEvents(new LobbyEventListener(this), this);
 
     }
 
@@ -81,6 +90,17 @@ public final class Skywars extends JavaPlugin implements Listener {
 
     public int getActiveGames() {
         return gameManagers.size();
+    }
+
+    public World getLobbyWorld() {
+        if (Bukkit.getWorld(lobbyName) == null) {
+            new WorldCreator(lobbyName).createWorld();
+        }
+        return Bukkit.getWorld(lobbyName);
+    }
+
+    public String getTemplateName() {
+        return templateName;
     }
 
 }
