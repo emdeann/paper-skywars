@@ -51,7 +51,7 @@ public class GameManager {
     private final int[] MAX_ITEMS = {2, 1, 1, 1, 1, 1, 1, 4};
     private final int[] setItems = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    private Skywars plugin;
+    private final Skywars plugin;
     private final Logger serverLogger;
 
     private GameEventListener gameListener;
@@ -67,12 +67,7 @@ public class GameManager {
         LOBBY_NAME = config.getString("Lobby");
     }
 
-    public boolean start(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            plugin.getServer().getConsoleSender().sendMessage("Start command must be sent by player");
-            return false;
-        }
-
+    public boolean start(Player sender) {
         gameState = GameState.SETUP;
         ArrayList<Player> allPlayers = new ArrayList<>(sender.getServer().getOnlinePlayers());
         activePlayers = new ArrayList<>(allPlayers);
@@ -81,7 +76,7 @@ public class GameManager {
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
 
         if (allPlayers.size() > spawnLocations.size()) {
-            ((Player) sender).sendMessage(Component.text("Too many players!", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Too many players!", NamedTextColor.RED));
             return false;
         }
 
@@ -122,7 +117,6 @@ public class GameManager {
         plugin.removeGameListener(gameListener);
         winner.getServer().sendMessage(Component.text(winner.getName() + " has won the game!", NamedTextColor.GREEN));
         winner.getServer().sendMessage(Component.text("Use /start to play again!", NamedTextColor.DARK_PURPLE));
-
         new CountdownRunnable(plugin, 10, "Returning to lobby in ",
                 "Returning to lobby!").runTaskTimer(plugin, 0, 20);
         new BukkitRunnable() {

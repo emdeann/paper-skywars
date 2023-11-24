@@ -4,3 +4,4 @@ Chests: ['7 28 -2', '0 28 6', '8 28 14', '16 28 6', '11 26 -46', '13 26
     26 1']
 Template: 'skywars_template'
 Lobby: 'skywars'
+MaxGames: 5

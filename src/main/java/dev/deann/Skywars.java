@@ -6,8 +6,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.codehaus.plexus.util.FileUtils;
@@ -20,11 +20,22 @@ import java.util.logging.Level;
 public final class Skywars extends JavaPlugin implements Listener {
 
     private ArrayList<GameManager> gameManagers;
+
+    private int DEFAULT_MAX_GAMES = 5;
+    private int maxGames;
     @Override
     public void onEnable() {
         // Plugin startup logic
         this.saveDefaultConfig();
+        maxGames = this.getConfig().getInt("MaxGames", DEFAULT_MAX_GAMES);
         gameManagers = new ArrayList<>();
+        Bukkit.getPluginCommand("start").setExecutor(new StartExecutor(this));
+
+    }
+
+    @Override
+    public void onDisable() {
+        // Plugin shutdown logic
         File worldContainer = this.getServer().getWorldContainer();
         for (File f : worldContainer.listFiles()) {
             if (f.getName().startsWith("skywars-")) {
@@ -35,28 +46,15 @@ public final class Skywars extends JavaPlugin implements Listener {
                 }
             }
         }
-        Bukkit.getPluginCommand("start").setExecutor(new StartExecutor(this));
-
-    }
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         // Game not active; players spawning in lobby
-        if (gameManagers.isEmpty()) {
-            Player p = event.getPlayer();
-            p.setGameMode(GameMode.ADVENTURE);
-            p.sendMessage(Component.text("There is no active game right now, one should start soon!",
-                    NamedTextColor.DARK_PURPLE));
-        }
-    }
-
-    public Skywars getInstance() {
-        return this;
+        Player p = event.getPlayer();
+        p.setGameMode(GameMode.ADVENTURE);
+        p.sendMessage(Component.text("There is no active game right now, one should start soon!",
+                NamedTextColor.DARK_PURPLE));
     }
 
     public GameManager addGameManager() {
@@ -74,7 +72,15 @@ public final class Skywars extends JavaPlugin implements Listener {
     }
 
     public void removeGameListener(Listener l) {
-        PlayerDeathEvent.getHandlerList().unregister(l);
+        HandlerList.unregisterAll(l);
+    }
+
+    public int getMaxGames() {
+        return maxGames;
+    }
+
+    public int getActiveGames() {
+        return gameManagers.size();
     }
 
 }
