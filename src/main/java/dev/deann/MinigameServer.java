@@ -117,7 +117,6 @@ public final class MinigameServer extends JavaPlugin implements Listener {
 
     public void addToQueue(Player p) {
         queue.add(p);
-        p.sendMessage(Component.text(queue.toString()));
         if (queue.size() == maxPlayersPerGame) {
             for (Player player : queue) {
                 player.sendMessage(Component.text("Queue has filled, sending you to a game!", NamedTextColor.GREEN));
