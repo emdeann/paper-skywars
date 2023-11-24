@@ -1,5 +1,6 @@
 package dev.deann;
 
+import dev.deann.Commands.QueueCommand;
 import dev.deann.Commands.StartCommand;
 import dev.deann.Commands.StopCommand;
 import dev.deann.EventListeners.GameEventListener;
@@ -19,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +30,7 @@ import java.util.logging.Level;
 public final class Skywars extends JavaPlugin implements Listener {
 
     private Map<World, GameManager> worldToGame;
+    private ArrayList<Player> queue;
     private String lobbyName;
     private String templateName;
     private int maxPlayersPerGame;
@@ -40,11 +43,14 @@ public final class Skywars extends JavaPlugin implements Listener {
         maxGames = config.getInt("MaxGames", 5);
         lobbyName = config.getString("Lobby", "skywars");
         templateName = config.getString("Template", "skywars_template");
-        maxPlayersPerGame = config.getStringList("Spawns").size();
+        //maxPlayersPerGame = config.getStringList("Spawns").size();
+        maxPlayersPerGame = 2;
         worldToGame = new HashMap<>();
+        queue = new ArrayList<>();
         if (maxPlayersPerGame == 0) maxPlayersPerGame = 4;
         Objects.requireNonNull(Bukkit.getPluginCommand("start")).setExecutor(new StartCommand(this));
         Objects.requireNonNull(Bukkit.getPluginCommand("stopGame")).setExecutor(new StopCommand(this));
+        Objects.requireNonNull(Bukkit.getPluginCommand("queue")).setExecutor(new QueueCommand(this));
         Bukkit.getPluginManager().registerEvents(new LobbyEventListener(this), this);
         Bukkit.getPluginManager().registerEvents(new GameEventListener(this), this);
 
@@ -108,5 +114,26 @@ public final class Skywars extends JavaPlugin implements Listener {
     }
     public int getMaxPlayersPerGame() {
         return maxPlayersPerGame;
+    }
+
+    public void addToQueue(Player p) {
+        queue.add(p);
+        p.sendMessage(Component.text(queue.toString()));
+        if (queue.size() == maxPlayersPerGame) {
+            for (Player player : queue) {
+                player.sendMessage(Component.text("Queue has filled, sending you to a game!", NamedTextColor.GREEN));
+            }
+            addGameManager().start(queue);
+        }
+    }
+
+    // GameManager will call this on every player on game start
+    // To ensure nobody can both be in a game and in the quee
+    public void removeFromQueue(Player p) {
+        queue.remove(p);
+    }
+
+    public boolean playerInQueue(Player p) {
+        return queue.contains(p);
     }
 }

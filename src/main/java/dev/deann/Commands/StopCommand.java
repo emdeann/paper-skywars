@@ -21,12 +21,12 @@ public class StopCommand implements CommandExecutor {
     }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             Bukkit.getServer().getConsoleSender().sendMessage("Stop command must be sent by a player!");
             return true;
         }
 
-        World senderWorld = ((Player) sender).getWorld();
+        World senderWorld = player.getWorld();
         GameManager game = plugin.getWorldToGame().get(senderWorld);
         if (game != null) {
             game.endGame(true);

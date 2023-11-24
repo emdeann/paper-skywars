@@ -12,3 +12,7 @@ commands:
     description: Stop an active game
     usage: /stopGame
     aliases: [stopGame]
+  queue:
+    description: Join the game queue
+    usage: /queue
+    aliases: [queue]

@@ -29,8 +29,6 @@ import java.util.logging.Logger;
 // calls back to the manager
 public class GameManager {
 
-    // Template map folder with this name must exist
-
     private final FileConfiguration config;
     private final String TEMPLATE_FOLDER;
 
@@ -66,6 +64,8 @@ public class GameManager {
         activeWorld = resetMap("skywars-" + System.currentTimeMillis());
     }
 
+    // @param allPlayers should not be used directly as it may change
+    // i.e. when the plugin queue is passed to start the game
     public boolean start(ArrayList<Player> allPlayers) {
         gameState = GameState.SETUP;
         activePlayers = new ArrayList<>(allPlayers);
@@ -74,9 +74,10 @@ public class GameManager {
         ArrayList<int[]> spawnLocations = parseLocations(config.getStringList("Spawns"));
         ArrayList<int[]> chestLocations = parseLocations(config.getStringList("Chests"));
         Material cageMaterial = Material.GLASS;
-        for (int i = 0; i < allPlayers.size(); i++) {
+        for (int i = 0; i < playersInGameServer.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
-            Player p = allPlayers.get(i);
+            Player p = playersInGameServer.get(i);
+            plugin.removeFromQueue(p);
             p.setFoodLevel(20);
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);
@@ -100,7 +101,7 @@ public class GameManager {
             @Override
             public void run() {
                 gameState = GameState.ACTIVE;
-                for (Player p : allPlayers) {
+                for (Player p : playersInGameServer) {
                     setCageBlocks(p, Material.AIR, cageMaterial);
                 }
             }

@@ -23,7 +23,7 @@ public class StartCommand implements CommandExecutor {
     }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             Bukkit.getServer().getConsoleSender().sendMessage("Start command must be sent by a player!");
             return true;
         }
@@ -31,12 +31,12 @@ public class StartCommand implements CommandExecutor {
             sender.sendMessage(Component.text("Max games already reached!", NamedTextColor.RED));
             return true;
         }
-        if (((Player) sender).getWorld() != plugin.getLobbyWorld()) {
+        if (player.getWorld() != plugin.getLobbyWorld()) {
             sender.sendMessage(Component.text("Game may only be started from lobby!", NamedTextColor.RED));
             return true;
         }
 
-        ArrayList<Player> sendToGame = new ArrayList<>(List.of((Player) sender));
+        ArrayList<Player> sendToGame = new ArrayList<>(List.of(player));
 
         for (int i = 0; i < plugin.getMaxPlayersPerGame() - 1 && i < args.length; i++) {
             Player p = Bukkit.getPlayer(args[i]);
