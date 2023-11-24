@@ -35,6 +35,9 @@ public class LobbyEventListener implements Listener {
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity().getWorld().equals(plugin.getLobbyWorld())) {
+            if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+                event.getEntity().teleport(plugin.getLobbyWorld().getSpawnLocation());
+            }
             event.setCancelled(true);
         }
     }

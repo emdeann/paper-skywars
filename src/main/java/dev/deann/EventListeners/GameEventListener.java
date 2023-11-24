@@ -7,10 +7,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -40,7 +42,10 @@ public class GameEventListener implements Listener {
     public void onDeathEvent(PlayerDeathEvent event) {
         Player dead = event.getPlayer();
         Location deathLoc = dead.getLocation();
-        deathLoc.setY(0);
+        int spawnY = dead.getWorld().getSpawnLocation().getBlockY();
+        if (deathLoc.getBlockY() < spawnY) {
+            deathLoc.setY(spawnY);
+        }
         // Don't respawn in blocks
         while (!gameManager.getActiveWorld().getBlockAt(deathLoc).isEmpty()) {
             deathLoc.setY(deathLoc.getBlockY() + 1);
@@ -64,10 +69,20 @@ public class GameEventListener implements Listener {
         }
     }
 
-    @EventHandler public void onPlayerInteract(PlayerInteractEvent event) {
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
         if (gameManager.getGameState() == GameState.COUNTDOWN && event.getAction() == Action.RIGHT_CLICK_BLOCK &&
         event.getClickedBlock().getType() == Material.CHEST) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDamage(EntityDamageEvent event) {
+        Entity entity = event.getEntity();
+        // Instant kill with void damage
+        if (entity instanceof Player && event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+            ((Player) entity).setHealth(0);
         }
     }
 }

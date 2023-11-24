@@ -236,8 +236,11 @@ public class GameManager {
        copyFileStructure(new File(Bukkit.getWorldContainer(), TEMPLATE_FOLDER),
                new File(Bukkit.getWorldContainer(), newWorldName));
        new WorldCreator(newWorldName).createWorld();
-
-       return Bukkit.getWorld(newWorldName);
+       World newWorld = Bukkit.getWorld(newWorldName);
+       if (newWorld != null) {
+       newWorld.setAutoSave(false);
+       }
+       return newWorld;
     }
 
     private void copyFileStructure(File source, File target){
