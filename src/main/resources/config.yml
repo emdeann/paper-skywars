@@ -1,7 +1,9 @@
-Spawns: ['-48 25 5', '9 25 -50', '64 25 7', '7 25 62']
-Chests: ['7 28 -2', '0 28 6', '8 28 14', '16 28 6', '11 26 -46', '13 26
+spawns: ['-48 25 5', '9 25 -50', '64 25 7', '7 25 62']
+chests: ['7 28 -2', '0 28 6', '8 28 14', '16 28 6', '11 26 -46', '13 26
     -51', '60 26 9', '65 26 11', '5 26 58', '3 26 63', '-44 26 3', '-49
     26 1']
-Template: 'skywars_template'
-Lobby: 'skywars'
-MaxGames: 5
+templates:
+  skywars: 'skywars_template'
+  survival_games: 'skywars_template'
+lobby: 'skywars'
+max_games: 5

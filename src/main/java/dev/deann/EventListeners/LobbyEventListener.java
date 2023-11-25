@@ -13,11 +13,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 public class LobbyEventListener implements Listener {
 
-    private final MinigameServer plugin;
     private final World lobbyWorld;
 
     public LobbyEventListener(MinigameServer plugin) {
-        this.plugin = plugin;
         this.lobbyWorld = plugin.getLobbyWorld();
     }
 
@@ -34,9 +32,9 @@ public class LobbyEventListener implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity().getWorld().equals(plugin.getLobbyWorld())) {
+        if (event.getEntity().getWorld().equals(lobbyWorld)) {
             if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
-                event.getEntity().teleport(plugin.getLobbyWorld().getSpawnLocation());
+                event.getEntity().teleport(lobbyWorld.getSpawnLocation());
             }
             event.setCancelled(true);
         }

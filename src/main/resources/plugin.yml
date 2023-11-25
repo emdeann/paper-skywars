@@ -16,3 +16,7 @@ commands:
     description: Join the game queue
     usage: /queue
     aliases: [queue]
+  hub:
+    description: Return to the hub from a game
+    usage: /hub
+    aliases: [hub, lobby, h]

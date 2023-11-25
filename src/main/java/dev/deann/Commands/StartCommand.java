@@ -1,5 +1,5 @@
 package dev.deann.Commands;
-import dev.deann.GameManager;
+import dev.deann.Managers.GameManager;
 import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -17,6 +17,7 @@ import java.util.List;
 public class StartCommand implements CommandExecutor {
 
     private final MinigameServer plugin;
+
     public StartCommand(MinigameServer plugin) {
         this.plugin = plugin;
     }
@@ -30,20 +31,30 @@ public class StartCommand implements CommandExecutor {
             sender.sendMessage(Component.text("Max games already reached!", NamedTextColor.RED));
             return true;
         }
-        if (player.getWorld() != plugin.getLobbyWorld()) {
+        if (plugin.playerInGame(player)) {
             sender.sendMessage(Component.text("Game may only be started from lobby!", NamedTextColor.RED));
             return true;
         }
 
-        ArrayList<Player> sendToGame = new ArrayList<>(List.of(player));
+        if (args.length < 1) {
+            sender.sendMessage(Component.text("A game type must be specified!", NamedTextColor.RED));
+            return true;
+        }
 
-        for (int i = 0; i < plugin.getMaxPlayersPerGame() - 1 && i < args.length; i++) {
+        String gameType = args[0];
+        GameManager manager = plugin.addGameManager(gameType);
+        if (manager == null) {
+            sender.sendMessage(Component.text("Invalid game type!", NamedTextColor.RED));
+            return true;
+        }
+
+        ArrayList<Player> sendToGame = new ArrayList<>(List.of(player));
+        for (int i = 1; i < plugin.getMaxPlayersPerGame() - 1 && i < args.length; i++) {
             Player p = Bukkit.getPlayer(args[i]);
             if (p != null) {
                 sendToGame.add(p);
             }
         }
-        GameManager manager = plugin.addGameManager();
-        return manager.start(sendToGame);
+        return manager.startGame(sendToGame);
     }
 }

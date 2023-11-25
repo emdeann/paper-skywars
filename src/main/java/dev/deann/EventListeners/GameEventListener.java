@@ -1,7 +1,7 @@
 package dev.deann.EventListeners;
 
-import dev.deann.GameManager;
 import dev.deann.Enum.GameState;
+import dev.deann.Managers.GameManager;
 import dev.deann.MinigameServer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -95,7 +95,7 @@ public class GameEventListener implements Listener {
         event.quitMessage(null);
         Player p = event.getPlayer();
         GameManager manager = getPlayerGame(p);
-        manager.removePlayerFromServerList(p);
+        manager.removePlayerFromGameServer(p);
     }
 
     private boolean playerInCountdown(Player p) {

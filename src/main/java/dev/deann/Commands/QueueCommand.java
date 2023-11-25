@@ -34,8 +34,17 @@ public class QueueCommand implements CommandExecutor {
             return true;
         }
 
-        player.sendMessage(Component.text("You've been added to the queue!", NamedTextColor.GREEN));
-        plugin.addToQueue(player);
+        if (args.length == 0) {
+            player.sendMessage(Component.text("You must specify a game type!", NamedTextColor.RED));
+            return true;
+        }
+        String gameType = args[0];
+        if (plugin.addToQueue(player, gameType)) {
+            player.sendMessage(Component.text("You've been added to the queue for " + gameType + "!"
+                    , NamedTextColor.GREEN));
+        } else {
+            sender.sendMessage(Component.text("Invalid game type!", NamedTextColor.RED));
+        }
         return true;
     }
 }
