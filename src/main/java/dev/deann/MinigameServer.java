@@ -39,15 +39,16 @@ public final class MinigameServer extends JavaPlugin implements Listener {
     private String lobbyName;
     private int maxPlayersPerGame;
     private int maxGames;
-    private ConfigurationSection templates;
     @Override
     public void onEnable() {
         // Plugin startup logic
         this.saveDefaultConfig();
         FileConfiguration config = this.getConfig();
-        maxGames = config.getInt("MaxGames", 5);
-        lobbyName = config.getString("Lobby", "skywars");
-        maxPlayersPerGame = config.getStringList("Spawns").size();
+        maxGames = config.getInt("max_games", 5);
+        lobbyName = config.getString("lobby", "skywars");
+        // Temp
+        // todo: use max players for individual games instead of globally
+        maxPlayersPerGame = 4;
         worldToGame = new HashMap<>();
         gameTypeToClass = Map.of(GameType.SKYWARS, ChestsSpawnsGameManager.class,
                 GameType.SURVIVAL_GAMES, ChestsSpawnsGameManager.class);
@@ -60,12 +61,6 @@ public final class MinigameServer extends JavaPlugin implements Listener {
         Objects.requireNonNull(Bukkit.getPluginCommand("hub")).setExecutor(new HubCommand(this));
         Bukkit.getPluginManager().registerEvents(new LobbyEventListener(this), this);
         Bukkit.getPluginManager().registerEvents(new GameEventListener(this), this);
-
-        templates = getConfig().getConfigurationSection("templates");
-        if (templates == null) {
-            this.getLogger().severe("Template files not configured. Shutting down...");
-            Bukkit.getPluginManager().disablePlugin(this);
-        }
 
     }
 
@@ -91,6 +86,7 @@ public final class MinigameServer extends JavaPlugin implements Listener {
         p.setGameMode(GameMode.ADVENTURE);
         p.sendMessage(Component.text("There is no active game right now, one should start soon!",
                 NamedTextColor.DARK_PURPLE));
+        bringToLobby(p);
     }
 
     public GameManager addGameManager(String type) {
@@ -100,15 +96,16 @@ public final class MinigameServer extends JavaPlugin implements Listener {
         }
 
         GameType gameType = nameToGameType.get(type.toLowerCase());
-        Class<? extends GameManager> gameClass = gameTypeToClass.get(gameType);
-        if (gameClass == null) {
+        if (gameType == null) {
             return null;
         }
+        Class<? extends GameManager> gameClass = gameTypeToClass.get(gameType);
         GameManager newManager;
         try {
             newManager = (GameManager) gameClass.getConstructors()[0].newInstance(this, type.toLowerCase());
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             this.getLogger().severe("Couldn't create new game of type " + type);
+            this.getLogger().severe(e.getMessage());
             return null;
         }
         worldToGame.put(newManager.getActiveWorld(), newManager);
@@ -151,7 +148,7 @@ public final class MinigameServer extends JavaPlugin implements Listener {
     }
 
     public String getTemplateName(String gameName) {
-        return templates.getString(gameName.toLowerCase());
+        return getConfig().getConfigurationSection(gameName).getString("template");
     }
     public int getMaxPlayersPerGame() {
         return maxPlayersPerGame;
