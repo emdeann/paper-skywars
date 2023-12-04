@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HubCommand implements CommandExecutor {
 
-    private MinigameServer plugin;
+    private final MinigameServer plugin;
 
     public HubCommand(MinigameServer plugin) {
         this.plugin = plugin;
@@ -30,6 +30,8 @@ public class HubCommand implements CommandExecutor {
             player.sendMessage(Component.text("Returning you to the lobby...", NamedTextColor.AQUA));
             player.setGameMode(GameMode.ADVENTURE);
             plugin.bringToLobby(player);
+        } else {
+            player.sendMessage(Component.text("You're already in the lobby!", NamedTextColor.RED));
         }
 
         return true;
