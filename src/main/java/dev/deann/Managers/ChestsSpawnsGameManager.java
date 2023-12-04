@@ -4,6 +4,7 @@ import dev.deann.Enum.GameState;
 import dev.deann.GameHelpers;
 import dev.deann.MinigameServer;
 import org.bukkit.*;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -33,6 +34,7 @@ public class ChestsSpawnsGameManager extends GameManager {
     // Parallel to availableItems
     private final int[] MAX_ITEMS = {2, 1, 1, 1, 1, 1, 1, 4};
     private final int[] setItems = {0, 0, 0, 0, 0, 0, 0, 0};
+
     public ChestsSpawnsGameManager(MinigameServer plugin, String gameName) {
         super(plugin, gameName);
     }

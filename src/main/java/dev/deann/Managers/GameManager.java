@@ -7,7 +7,7 @@ import dev.deann.Runnables.CountdownRunnable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -17,7 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class GameManager implements AbstractGameManager {
-    protected final FileConfiguration config;
+    protected final ConfigurationSection config;
     private final String TEMPLATE_FOLDER;
 
     protected final MinigameServer plugin;
@@ -34,7 +34,7 @@ public class GameManager implements AbstractGameManager {
         this.plugin = plugin;
         this.gameName = gameName;
         serverLogger = plugin.getLogger();
-        config = plugin.getConfig();
+        config = plugin.getGameConfig(gameName);
         // MOVE TO BASE
         TEMPLATE_FOLDER = plugin.getTemplateName(gameName);
         activeWorld = GameHelpers.resetMap(gameName + "-" + System.currentTimeMillis(), TEMPLATE_FOLDER);

@@ -105,7 +105,7 @@ public final class MinigameServer extends JavaPlugin implements Listener {
             newManager = (GameManager) gameClass.getConstructors()[0].newInstance(this, type.toLowerCase());
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             this.getLogger().severe("Couldn't create new game of type " + type);
-            this.getLogger().severe(e.getMessage());
+            this.getLogger().severe(Arrays.toString(e.getCause().getStackTrace()));
             return null;
         }
         worldToGame.put(newManager.getActiveWorld(), newManager);
@@ -148,10 +148,15 @@ public final class MinigameServer extends JavaPlugin implements Listener {
     }
 
     public String getTemplateName(String gameName) {
-        return getConfig().getConfigurationSection(gameName).getString("template");
+        getLogger().info(gameName);
+        return getGameConfig(gameName).getString("template");
     }
     public int getMaxPlayersPerGame() {
         return maxPlayersPerGame;
+    }
+
+    public ConfigurationSection getGameConfig(String gameName) {
+        return getConfig().getConfigurationSection("games").getConfigurationSection(gameName);
     }
 
     public boolean addToQueue(Player p, String type) {
