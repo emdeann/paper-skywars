@@ -144,10 +144,11 @@ public final class MinigameServer extends JavaPlugin implements Listener {
     }
 
     public ConfigurationSection getGameConfig(String gameName) {
-        return getConfig().getConfigurationSection("games").getConfigurationSection(gameName.toLowerCase());
+        return Objects.requireNonNull(getConfig().getConfigurationSection("games"))
+                .getConfigurationSection(gameName.toLowerCase());
     }
 
-    public boolean addToQueue(Player p, GameType gameType) {
+    public void addToQueue(Player p, GameType gameType) {
 
         queue.computeIfAbsent(gameType, k -> new ArrayList<>());
         ArrayList<Player> thisQueue = queue.get(gameType);
@@ -166,7 +167,6 @@ public final class MinigameServer extends JavaPlugin implements Listener {
                 }
             }
         }
-        return true;
     }
 
     // GameManager will call this on every player on game start
