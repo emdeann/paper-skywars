@@ -1,5 +1,6 @@
 package dev.deann.Commands;
 
+import dev.deann.Enum.GameType;
 import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,9 +39,10 @@ public class QueueCommand implements CommandExecutor {
             player.sendMessage(Component.text("You must specify a game type!", NamedTextColor.RED));
             return true;
         }
-        String gameType = args[0];
-        if (plugin.addToQueue(player, gameType)) {
-            player.sendMessage(Component.text("You've been added to the queue for " + gameType + "!"
+        GameType gameType = GameType.getTypeByString(args[0]);
+        if (gameType != null) {
+            plugin.addToQueue(player, gameType);
+            player.sendMessage(Component.text("You've been added to the queue for " + gameType.getTitleName() + "!"
                     , NamedTextColor.GREEN));
         } else {
             sender.sendMessage(Component.text("Invalid game type!", NamedTextColor.RED));

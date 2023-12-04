@@ -1,10 +1,10 @@
 package dev.deann.Managers;
 
 import dev.deann.Enum.GameState;
+import dev.deann.Enum.GameType;
 import dev.deann.GameHelpers;
 import dev.deann.MinigameServer;
 import org.bukkit.*;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -35,8 +35,8 @@ public class ChestsSpawnsGameManager extends GameManager {
     private final int[] MAX_ITEMS = {2, 1, 1, 1, 1, 1, 1, 4};
     private final int[] setItems = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    public ChestsSpawnsGameManager(MinigameServer plugin, String gameName) {
-        super(plugin, gameName);
+    public ChestsSpawnsGameManager(MinigameServer plugin, GameType gameType) {
+        super(plugin, gameType);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class ChestsSpawnsGameManager extends GameManager {
         for (int i = 0; i < playersInGameServer.size(); i++) {
             int[] curLoc = spawnLocations.get(i);
             Player p = playersInGameServer.get(i);
-            plugin.removeFromQueue(p, gameName);
+            plugin.removeFromQueue(p, gameType);
             p.setFoodLevel(20);
             p.setHealth(20);
             p.setGameMode(GameMode.SURVIVAL);

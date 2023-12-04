@@ -1,4 +1,5 @@
 package dev.deann.Commands;
+import dev.deann.Enum.GameType;
 import dev.deann.Managers.GameManager;
 import dev.deann.MinigameServer;
 import net.kyori.adventure.text.Component;
@@ -42,7 +43,7 @@ public class StartCommand implements CommandExecutor {
         }
 
         String gameType = args[0];
-        GameManager manager = plugin.addGameManager(gameType);
+        GameManager manager = plugin.addGameManager(GameType.getTypeByString(gameType));
         if (manager == null) {
             sender.sendMessage(Component.text("Invalid game type!", NamedTextColor.RED));
             return true;

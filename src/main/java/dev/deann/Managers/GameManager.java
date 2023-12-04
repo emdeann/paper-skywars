@@ -1,6 +1,7 @@
 package dev.deann.Managers;
 
 import dev.deann.Enum.GameState;
+import dev.deann.Enum.GameType;
 import dev.deann.GameHelpers;
 import dev.deann.MinigameServer;
 import dev.deann.Runnables.CountdownRunnable;
@@ -29,15 +30,15 @@ public class GameManager implements AbstractGameManager {
     protected ArrayList<Player> playersInGameServer;
     protected BukkitTask countdownTask;
 
-    protected String gameName;
-    public GameManager(MinigameServer plugin, String gameName) {
+    protected GameType gameType;
+    public GameManager(MinigameServer plugin, GameType gameType) {
         this.plugin = plugin;
-        this.gameName = gameName;
+        this.gameType = gameType;
         serverLogger = plugin.getLogger();
-        config = plugin.getGameConfig(gameName);
+        config = plugin.getGameConfig(gameType.getName());
         // MOVE TO BASE
-        TEMPLATE_FOLDER = plugin.getTemplateName(gameName);
-        activeWorld = GameHelpers.resetMap(gameName + "-" + System.currentTimeMillis(), TEMPLATE_FOLDER);
+        TEMPLATE_FOLDER = config.getString("template");
+        activeWorld = GameHelpers.resetMap(gameType.getName() + "-" + System.currentTimeMillis(), TEMPLATE_FOLDER);
     }
 
     // @param allPlayers should not be used directly as it may change
@@ -88,7 +89,8 @@ public class GameManager implements AbstractGameManager {
     }
 
     protected void runCountDown(BukkitRunnable runAfter) {
-        String countdownMessage = gameName + " starting in ", finishedMessage = gameName + " started!";
+        String countdownMessage = gameType.getTitleName() + " starting in ",
+                finishedMessage = GameType.SKYWARS.getTitleName() + " started!";
         int countdownLength = 5;
         countdownTask = new CountdownRunnable(countdownLength, countdownMessage, finishedMessage, activeWorld)
                 .runTaskTimer(plugin, 0, 20);

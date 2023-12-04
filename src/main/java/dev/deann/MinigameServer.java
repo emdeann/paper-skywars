@@ -34,7 +34,6 @@ public final class MinigameServer extends JavaPlugin implements Listener {
 
     private Map<World, GameManager> worldToGame;
     private Map<GameType, Class<? extends GameManager>> gameTypeToClass;
-    private Map<String, GameType> nameToGameType;
     private Map<GameType, ArrayList<Player>> queue;
     private String lobbyName;
     private int maxPlayersPerGame;
@@ -52,7 +51,6 @@ public final class MinigameServer extends JavaPlugin implements Listener {
         worldToGame = new HashMap<>();
         gameTypeToClass = Map.of(GameType.SKYWARS, ChestsSpawnsGameManager.class,
                 GameType.SURVIVAL_GAMES, ChestsSpawnsGameManager.class);
-        nameToGameType = Map.of("skywars", GameType.SKYWARS, "sg", GameType.SURVIVAL_GAMES);
         queue = new HashMap<>();
         if (maxPlayersPerGame == 0) maxPlayersPerGame = 4;
         Objects.requireNonNull(Bukkit.getPluginCommand("start")).setExecutor(new StartCommand(this));
@@ -89,23 +87,17 @@ public final class MinigameServer extends JavaPlugin implements Listener {
         bringToLobby(p);
     }
 
-    public GameManager addGameManager(String type) {
+    public GameManager addGameManager(GameType gameType) {
         if (worldToGame.size() >= maxGames) {
             this.getLogger().info("Attempted to start an overflow game");
-            return null;
-        }
-
-        GameType gameType = nameToGameType.get(type.toLowerCase());
-        if (gameType == null) {
             return null;
         }
         Class<? extends GameManager> gameClass = gameTypeToClass.get(gameType);
         GameManager newManager;
         try {
-            newManager = (GameManager) gameClass.getConstructors()[0].newInstance(this, type.toLowerCase());
+            newManager = (GameManager) gameClass.getConstructors()[0].newInstance(this, gameType);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            this.getLogger().severe("Couldn't create new game of type " + type);
-            this.getLogger().severe(Arrays.toString(e.getCause().getStackTrace()));
+            this.getLogger().severe("Couldn't create new game of type " + gameType.getTitleName());
             return null;
         }
         worldToGame.put(newManager.getActiveWorld(), newManager);
@@ -147,21 +139,15 @@ public final class MinigameServer extends JavaPlugin implements Listener {
         return Bukkit.getWorld(lobbyName);
     }
 
-    public String getTemplateName(String gameName) {
-        getLogger().info(gameName);
-        return getGameConfig(gameName).getString("template");
-    }
     public int getMaxPlayersPerGame() {
         return maxPlayersPerGame;
     }
 
     public ConfigurationSection getGameConfig(String gameName) {
-        return getConfig().getConfigurationSection("games").getConfigurationSection(gameName);
+        return getConfig().getConfigurationSection("games").getConfigurationSection(gameName.toLowerCase());
     }
 
-    public boolean addToQueue(Player p, String type) {
-        GameType gameType = nameToGameType.get(type.toLowerCase());
-        if (gameType == null) return false;
+    public boolean addToQueue(Player p, GameType gameType) {
 
         queue.computeIfAbsent(gameType, k -> new ArrayList<>());
         ArrayList<Player> thisQueue = queue.get(gameType);
@@ -172,7 +158,7 @@ public final class MinigameServer extends JavaPlugin implements Listener {
                 player.sendMessage(Component.text("Queue has filled, sending you to a game!", NamedTextColor.GREEN));
             }
             if (worldToGame.size() < maxGames) {
-                Objects.requireNonNull(addGameManager(type)).startGame(thisQueue);
+                Objects.requireNonNull(addGameManager(gameType)).startGame(thisQueue);
             } else {
                 for (Player player : thisQueue) {
                     player.sendMessage(Component.text("The maximum number of games has been reached, waiting to send you to the next available game"
@@ -185,12 +171,12 @@ public final class MinigameServer extends JavaPlugin implements Listener {
 
     // GameManager will call this on every player on game start
     // To ensure nobody can both be in a game and in the queue
-    public void removeFromQueue(Player p, String type) {
-        ArrayList<Player> thisQueue = queue.get(nameToGameType.get(type.toLowerCase()));
+    public void removeFromQueue(Player p, GameType gameType) {
+        ArrayList<Player> thisQueue = queue.get(gameType);
         if (thisQueue != null) {
-            queue.get(nameToGameType.get(type.toLowerCase())).remove(p);
+            thisQueue.remove(p);
         } else {
-            getLogger().severe("Attempted to remove " + p.getName() + " from the " + type + " queue, but it didn't exist");
+            getLogger().severe("Attempted to remove " + p.getName() + " from the " + gameType.getTitleName() + " queue, but it didn't exist");
         }
     }
 
