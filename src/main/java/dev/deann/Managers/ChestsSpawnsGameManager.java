@@ -58,14 +58,18 @@ public class ChestsSpawnsGameManager extends GameManager {
             Location toTeleport = new Location(activeWorld, curLoc[0], curLoc[1], curLoc[2]);
             p.teleport(new Location(activeWorld, toTeleport.getBlockX() + 0.5, toTeleport.getBlockY(),
                     toTeleport.getBlockZ() + 0.5));
-            setCageBlocks(p, cageMaterial, Material.AIR);
+            if (gameType == GameType.SKYWARS) {
+                setCageBlocks(p, cageMaterial, Material.AIR);
+            }
         }
         super.runCountDown(new BukkitRunnable() {
             @Override
             public void run() {
                 gameState = GameState.ACTIVE;
-                for (Player p : playersInGameServer) {
-                    setCageBlocks(p, Material.AIR, cageMaterial);
+                if (gameType == GameType.SKYWARS) {
+                    for (Player p : playersInGameServer) {
+                        setCageBlocks(p, Material.AIR, cageMaterial);
+                    }
                 }
             }
         });
