@@ -27,6 +27,8 @@ public class GameManager implements AbstractGameManager {
     protected final World activeWorld;
     private ArrayList<Player> activePlayers;
     private ArrayList<Player> spectators;
+
+    protected boolean breakingAllowed;
     protected ArrayList<Player> playersInGameServer;
     protected BukkitTask countdownTask;
 
@@ -39,6 +41,7 @@ public class GameManager implements AbstractGameManager {
         // MOVE TO BASE
         TEMPLATE_FOLDER = config.getString("template");
         activeWorld = GameHelpers.resetMap(gameType.getName() + "-" + System.currentTimeMillis(), TEMPLATE_FOLDER);
+        breakingAllowed = this.gameType == GameType.SKYWARS;
     }
 
     // @param allPlayers should not be used directly as it may change
@@ -123,5 +126,9 @@ public class GameManager implements AbstractGameManager {
         spectators.remove(player);
 
         activeWorld.sendMessage(Component.text(player.getName() + " has left the game!", NamedTextColor.AQUA));
+    }
+
+    public boolean canBreakBlocks() {
+        return breakingAllowed;
     }
 }

@@ -3,6 +3,8 @@ package dev.deann.EventListeners;
 import dev.deann.Enum.GameState;
 import dev.deann.Managers.GameManager;
 import dev.deann.MinigameServer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -66,8 +68,13 @@ public class GameEventListener implements Listener {
 
     @EventHandler
     public void blockBreakEvent(BlockBreakEvent event) {
-        if (playerInCountdown(event.getPlayer())) {
+        boolean canBreakBlocks = getPlayerGame(event.getPlayer()).canBreakBlocks();
+        if (playerInCountdown(event.getPlayer()) || !canBreakBlocks) {
             event.setCancelled(true);
+            if (!canBreakBlocks) {
+                event.getPlayer().sendMessage(Component.text("You cannot break map blocks in this mode!",
+                        NamedTextColor.RED));
+            }
         }
     }
 
