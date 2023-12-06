@@ -29,6 +29,7 @@ public class GameManager implements AbstractGameManager {
     private ArrayList<Player> spectators;
 
     protected boolean breakingAllowed;
+    protected boolean canLoseHunger;
     protected ArrayList<Player> playersInGameServer;
     protected BukkitTask countdownTask;
 
@@ -130,5 +131,9 @@ public class GameManager implements AbstractGameManager {
 
     public boolean canBreakBlocks() {
         return breakingAllowed;
+    }
+
+    public boolean canLoseHunger() {
+        return canLoseHunger;
     }
 }

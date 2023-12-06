@@ -37,6 +37,7 @@ public class ChestsSpawnsGameManager extends GameManager {
 
     public ChestsSpawnsGameManager(MinigameServer plugin, GameType gameType) {
         super(plugin, gameType);
+        canLoseHunger = true;
     }
 
     @Override

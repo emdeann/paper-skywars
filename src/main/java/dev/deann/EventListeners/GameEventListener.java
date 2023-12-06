@@ -16,6 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -75,6 +76,14 @@ public class GameEventListener implements Listener {
                 event.getPlayer().sendMessage(Component.text("You cannot break map blocks in this mode!",
                         NamedTextColor.RED));
             }
+        }
+    }
+
+    @EventHandler
+    public void onHungerChange(FoodLevelChangeEvent event) {
+        if (!getPlayerGame((Player) event.getEntity()).canLoseHunger()) {
+            event.setCancelled(true);
+            event.getEntity().setFoodLevel(20);
         }
     }
 

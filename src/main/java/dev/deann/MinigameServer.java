@@ -118,7 +118,7 @@ public final class MinigameServer extends JavaPlugin implements Listener {
     }
 
     public void bringToLobby(Player player) {
-        player.teleport(getLobbyWorld().getSpawnLocation());
+        player.teleport(Objects.requireNonNull(getLobbyWorld()).getSpawnLocation());
     }
 
     public int getMaxGames() {
