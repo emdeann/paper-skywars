@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 
 public class GameManager implements AbstractGameManager {
     protected final ConfigurationSection config;
-    private final String TEMPLATE_FOLDER;
 
     protected final MinigameServer plugin;
     protected final Logger serverLogger;
@@ -40,8 +39,8 @@ public class GameManager implements AbstractGameManager {
         serverLogger = plugin.getLogger();
         config = plugin.getGameConfig(gameType.getName());
         // MOVE TO BASE
-        TEMPLATE_FOLDER = config.getString("template");
-        activeWorld = GameHelpers.resetMap(gameType.getName() + "-" + System.currentTimeMillis(), TEMPLATE_FOLDER);
+        String templateMap = config.getString("template");
+        activeWorld = GameHelpers.resetMap(gameType.getName() + "-" + System.currentTimeMillis(), templateMap);
         breakingAllowed = this.gameType == GameType.SKYWARS;
     }
 
