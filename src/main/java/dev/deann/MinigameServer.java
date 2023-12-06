@@ -11,10 +11,7 @@ import dev.deann.Managers.ChestsSpawnsGameManager;
 import dev.deann.Managers.GameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -134,9 +131,20 @@ public final class MinigameServer extends JavaPlugin implements Listener {
 
     public World getLobbyWorld() {
         if (Bukkit.getWorld(lobbyName) == null) {
-            new WorldCreator(lobbyName).createWorld();
+            new WorldCreator(lobbyName)
+                .generateStructures(false)
+                .environment(World.Environment.CUSTOM)
+                .createWorld();
         }
-        return Bukkit.getWorld(lobbyName);
+        World w = Bukkit.getWorld(lobbyName);
+        if (w == null) {
+            return null;
+        }
+        w.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        w.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+
+        return w;
     }
 
     public int getMaxPlayersPerGame() {

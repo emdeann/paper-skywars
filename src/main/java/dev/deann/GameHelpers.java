@@ -1,6 +1,7 @@
 package dev.deann;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.codehaus.plexus.util.FileUtils;
@@ -39,10 +40,16 @@ public class GameHelpers {
     public static World resetMap(String newWorldName, String template) {
         copyFileStructure(new File(Bukkit.getWorldContainer(), template),
                 new File(Bukkit.getWorldContainer(), newWorldName));
-        new WorldCreator(newWorldName).createWorld();
+        new WorldCreator(newWorldName)
+                .generateStructures(false)
+                .environment(World.Environment.CUSTOM)
+                .createWorld();
         World newWorld = Bukkit.getWorld(newWorldName);
         if (newWorld != null) {
             newWorld.setAutoSave(false);
+            newWorld.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+            newWorld.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+            newWorld.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         }
         return newWorld;
     }
