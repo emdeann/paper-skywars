@@ -1,8 +1,10 @@
 package dev.deann.EventListeners;
 
-import dev.deann.GameManager;
 import dev.deann.Enum.GameState;
+import dev.deann.Managers.GameManager;
 import dev.deann.MinigameServer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -14,9 +16,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class GameEventListener implements Listener {
     private final MinigameServer plugin;
@@ -65,8 +69,21 @@ public class GameEventListener implements Listener {
 
     @EventHandler
     public void blockBreakEvent(BlockBreakEvent event) {
-        if (playerInCountdown(event.getPlayer())) {
+        boolean canBreakBlocks = getPlayerGame(event.getPlayer()).canBreakBlocks();
+        if (playerInCountdown(event.getPlayer()) || !canBreakBlocks) {
             event.setCancelled(true);
+            if (!canBreakBlocks) {
+                event.getPlayer().sendMessage(Component.text("You cannot break map blocks in this mode!",
+                        NamedTextColor.RED));
+            }
+        }
+    }
+
+    @EventHandler
+    public void onHungerChange(FoodLevelChangeEvent event) {
+        if (!getPlayerGame((Player) event.getEntity()).canLoseHunger()) {
+            event.setCancelled(true);
+            event.getEntity().setFoodLevel(20);
         }
     }
 
@@ -86,6 +103,15 @@ public class GameEventListener implements Listener {
             ((Player) entity).setHealth(0);
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler public void onPlayerLeave(PlayerQuitEvent event) {
+        if (!playerInGame(event.getPlayer())) return;
+
+        event.quitMessage(null);
+        Player p = event.getPlayer();
+        GameManager manager = getPlayerGame(p);
+        manager.removePlayerFromGameServer(p);
     }
 
     private boolean playerInCountdown(Player p) {

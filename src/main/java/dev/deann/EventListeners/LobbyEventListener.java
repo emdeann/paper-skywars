@@ -9,17 +9,24 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public class LobbyEventListener implements Listener {
 
-    private final MinigameServer plugin;
     private final World lobbyWorld;
 
     public LobbyEventListener(MinigameServer plugin) {
-        this.plugin = plugin;
         this.lobbyWorld = plugin.getLobbyWorld();
     }
+
+    @EventHandler
+    public void onHungerChange(FoodLevelChangeEvent event) {
+        // No food loss in lobbies
+        event.setCancelled(true);
+        event.getEntity().setFoodLevel(20);
+    }
+
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -34,9 +41,9 @@ public class LobbyEventListener implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity().getWorld().equals(plugin.getLobbyWorld())) {
+        if (event.getEntity().getWorld().equals(lobbyWorld)) {
             if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
-                event.getEntity().teleport(plugin.getLobbyWorld().getSpawnLocation());
+                event.getEntity().teleport(lobbyWorld.getSpawnLocation());
             }
             event.setCancelled(true);
         }
